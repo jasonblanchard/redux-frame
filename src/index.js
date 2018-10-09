@@ -5,13 +5,13 @@ export function frame(type) {
 }
 
 function isFrame(type) {
-  // TODO: Use FRAME_PREFIX
-  return /^@@REDUX_FRAME\//.test(type);
+  const re = new RegExp('^' + FRAME_PREFIX + '\/');
+  return re.test(type);
 }
 
 function stripFrame(type) {
-  // TODO: Use FRAME_PREFIX
-  return type.replace(/^@@REDUX_FRAME\//, '');
+  const re = new RegExp('^' + FRAME_PREFIX + '\/');
+  return type.replace(re, '');
 }
 
 function normalizeFramedAction(action) {
@@ -26,22 +26,22 @@ function createDoEffects(effectHandlers) {
   }
 }
 
-export function mergeWithEffects(context, effects) {
+export function mergeWithEffects(context, effect) {
   return {
     ...context,
     effects: {
       ...context.effects,
-      ...effects
+      ...effect
     }
   }
 }
 
-export function mergeWithCoeffects(context, coeffects) {
+export function mergeWithCoeffects(context, coeffect) {
   return {
     ...context,
     coeffects: {
       ...context.coeffects,
-      ...coeffects
+      ...coeffect
     }
   }
 }
@@ -58,8 +58,8 @@ export function injectCoeffects(coeffectId, ...args) {
   }
 }
 
-const dispatchOriginalActionInterceptor = {
-  before: context => mergeWithEffects(context, { dispatch: context.coeffects.action })
+const dispatchOriginalAction = {
+  after: context => mergeWithEffects(context, { dispatch: context.coeffects.action })
 }
 
 export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }) => store => next => action => {
@@ -70,7 +70,7 @@ export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }
     const { interceptors, type } = action;
 
     const { effectHandlers, coeffectHandlers } = config;
-    // Setup some default effect handlers.
+    // Setup some built-in effect handlers.
     effectHandlers.dispatch = (coeffects, action) => store.dispatch(action)
     coeffectHandlers.state = (coeffects, state) => state;
 
@@ -80,36 +80,39 @@ export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }
         action: normalizeFramedAction(action)
       },
       effects: {},
-      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), dispatchOriginalActionInterceptor, ...interceptors],
+      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), dispatchOriginalAction, ...interceptors],
       stack: []
     }
 
     // Invoke functions in stack with context, return value is new context
-    const contextAfterBeforeHandlers = context.queue.reduce((context, interceptor) => {
-      context = interceptor.before ? interceptor.before(context) || context : context;
+    // TODO: I think these need to be recursive function calls so that the stack can be modified by the handler
+    const contextAfterBeforeHandlers = context.queue.reduce((updatedContext, interceptor) => {
+      updatedContext = interceptor.before ? interceptor.before(updatedContext) || updatedContext : updatedContext;
 
       // Handle pending coeffect handler
       // TODO: Instead of handling this here, should it tack on an additional interceptor before moving on?
-      if (context.pendingCoeffectHandler) {
-        const { coeffectId, args } = context.pendingCoeffectHandler;
-        context.coeffects[coeffectId] = coeffectHandlers[coeffectId](context.coeffects, ...args)
-        delete context.pendingCoeffectHandler;
+      if (updatedContext.pendingCoeffectHandler) {
+        const { coeffectId, args } = updatedContext.pendingCoeffectHandler;
+        updatedContext.coeffects[coeffectId] = coeffectHandlers[coeffectId](updatedContext.coeffects, ...args)
+        delete updatedContext.pendingCoeffectHandler;
       }
 
       // Build up stack of interceptors we have already walked so we can execute their `after` functions later.
-      context.stack = [interceptor, ...context.stack]
-      return context;
+      updatedContext.stack = [interceptor, ...updatedContext.stack]
+      return updatedContext;
     }, context);
 
-    // Invoke functions in stack with context
-    // TODO: I think this should build up context with `after` calls, too?
-    contextAfterBeforeHandlers.stack
-      .map(interceptor => interceptor.after)
-      .filter(fn => !!fn)
-      .forEach(fn => fn(contextAfterBeforeHandlers));
+    // Invoke stack of `after` handlers.
+    const contextAfterAfterHandlers = contextAfterBeforeHandlers.stack.reduce((updatedContext, interceptor) => {
+      updatedContext = interceptor.after ? interceptor.after(updatedContext) || updatedContext : updatedContext;
+      return updatedContext;
+    }, contextAfterBeforeHandlers);
+
+    console.log('FINAL CONTEXT MAP', contextAfterAfterHandlers);
 
     return;
   }
+
   next(action);
   return;
 }
