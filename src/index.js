@@ -14,9 +14,15 @@ function stripFrame(type) {
   return type.replace(/^@@REDUX_FRAME\//, '');
 }
 
+function normalizeFramedAction(action) {
+  const normalizedAction = {...action, ...{ type: stripFrame(action.type)} }
+  delete normalizedAction.interceptors;
+  return normalizedAction;
+}
+
 function createDoEffects(effectHandlers) {
   return {
-    after: context => Object.keys(context.effects).forEach(effectKey => effectHandlers[effectKey](context.effects[effectKey]))
+    after: context => Object.keys(context.effects).forEach(effectId => effectHandlers[effectId](context.coeffects, context.effects[effectId]))
   }
 }
 
@@ -40,34 +46,51 @@ export function mergeWithCoeffects(context, coeffects) {
   }
 }
 
-export const reduxFrame = (config = { effectHandlers: {} }) => store => next => action => {
+export function injectCoeffects(coeffectId, args) {
+  return {
+    before: context => mergeWithCoeffects(context, { [coeffectId]: args })
+  }
+}
+
+function createDoInjectCoeffects(coeffectHandlers) {
+  return {
+    before: context => mergeWithCoeffects(
+      context,
+      Object.keys(context.coeffects).reduce((accum, coeffectId) => {
+        if (coeffectHandlers[coeffectId]) accum[coeffectId] = coeffectHandlers[coeffectId](context.coeffects, context.coeffects[coeffectId])
+        return accum;
+      }, {})
+    )
+  }
+}
+
+const dispatchOriginalActionInterceptor = {
+  before: context => mergeWithEffects(context, { dispatch: context.coeffects.action })
+}
+
+export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }) => store => next => action => {
   if(isFrame(action.type)) {
     next(action);
 
     const { interceptors, type } = action;
     console.log(type, 'do frame stuff')
 
-    const { effectHandlers } = config;
-    effectHandlers.dispatch = action => store.dispatch(action)
-
-    const dispatchInterceptor = {
-      before: context => mergeWithEffects(context, { dispatch: {...action, ...{ type: stripFrame(action.type), interceptors: undefined } } })
-    }
-
-    const stateInterceptor = {
-      before: context => mergeWithCoeffects(context, { state: store.getState() })
-    }
+    const { effectHandlers, coeffectHandlers } = config;
+    effectHandlers.dispatch = (coeffects, action) => store.dispatch(action)
+    coeffectHandlers.state = (coeffects, state) => state;
 
     // Initialize context. This gets threaded through all interceptors.
     const context = {
-      coeffects: {},
+      coeffects: {
+        action: normalizeFramedAction(action)
+      },
       effects: {},
-      queue: [createDoEffects(effectHandlers), dispatchInterceptor, stateInterceptor, ...interceptors],
+      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), dispatchOriginalActionInterceptor, createDoInjectCoeffects(coeffectHandlers), ...interceptors],
       stack: []
     }
 
     // Invoke functions in stack with context, return value is new context
-    const updatedContext = context.queue.reduce((accum, interceptor) => {
+    const contextAfterBeforeHandlers = context.queue.reduce((accum, interceptor) => {
       accum = interceptor.before ? interceptor.before(accum) || accum : accum;
       // Build up stack of interceptors we have already walked so we can execute their `after` functions later.
       accum.stack = [interceptor, ...accum.stack]
@@ -77,10 +100,11 @@ export const reduxFrame = (config = { effectHandlers: {} }) => store => next => 
     console.log(context);
 
     // Invoke functions in stack with context
-    updatedContext.stack
+    // TODO: I think this should build up context with `after` calls, too?
+    contextAfterBeforeHandlers.stack
       .map(interceptor => interceptor.after)
       .filter(fn => !!fn)
-      .forEach(fn => fn(updatedContext));
+      .forEach(fn => fn(contextAfterBeforeHandlers));
 
     return;
   }

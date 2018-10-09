@@ -5,7 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { frame, reduxFrame } from './redux-frame';
+import { frame, reduxFrame, injectCoeffects } from './redux-frame';
 
 function reducer(state = {num: 0}, action) {
   switch (action.type) {
@@ -25,7 +25,14 @@ const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const store = createStore(
   reducer,
   composeEnhancers(
-    applyMiddleware(reduxFrame())
+    applyMiddleware(reduxFrame({
+      coeffectHandlers: {
+        coeffectTester: () => {
+          return 'test';
+        }
+      },
+      effectHandlers: {}
+    }))
   )
 )
 
@@ -47,7 +54,7 @@ store.dispatch({ type: 'INCREMENT' });
 store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [beforeLoggerInterceptor, inBetween, afterLoggerInterceptor]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa'), beforeLoggerInterceptor, inBetween, afterLoggerInterceptor]
 });
 
 ReactDOM.render(<App />, document.getElementById('root'));
