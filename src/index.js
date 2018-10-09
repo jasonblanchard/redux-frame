@@ -30,7 +30,7 @@ export function mergeWithEffects(context, effect) {
   }
 }
 
-function mergeWithCoeffects(context, coeffect) {
+export function mergeWithCoeffects(context, coeffect) {
   return {
     ...context,
     coeffects: {

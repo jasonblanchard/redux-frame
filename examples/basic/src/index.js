@@ -5,7 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { frame, reduxFrame, injectCoeffects } from './redux-frame';
+import { frame, reduxFrame, injectCoeffects, mergeWithEffects } from './redux-frame';
 
 function reducer(state = {num: 0}, action) {
   switch (action.type) {
@@ -31,30 +31,23 @@ const store = createStore(
           return `testing ${arg1} ${arg2}`;
         }
       },
-      effectHandlers: {}
+      effectHandlers: {
+        doSomething: () => console.log('did it')
+      }
     }))
   )
 )
 
-const firstInterceptor = {
-  before: context => console.log('should be the first thing', context),
-  after: context => console.log('should be the last thing', context)
-}
-
-const inBetween = {
-  before: context => console.log('inBetween before'),
-  after: context => console.log('inBetween after')
-}
-
-const lastInterceptor = {
-  after: context => console.log('lastInterceptor', context)
+const doSomething = {
+  id: 'doSomething',
+  after: context => mergeWithEffects(context, { 'doSomething': null })
 }
 
 store.dispatch({ type: 'INCREMENT' });
 const contextMap = store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), firstInterceptor, inBetween, lastInterceptor]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), doSomething]
 });
 
 console.log('FINAL CONTEXT MAP', contextMap);
