@@ -107,10 +107,8 @@ export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }
       updatedContext = interceptor.after ? interceptor.after(updatedContext) || updatedContext : updatedContext;
       return updatedContext;
     }, contextAfterBeforeHandlers);
-
-    console.log('FINAL CONTEXT MAP', contextAfterAfterHandlers);
-
-    return;
+    
+    return contextAfterAfterHandlers;
   }
 
   next(action);

@@ -51,11 +51,13 @@ const lastInterceptor = {
 }
 
 store.dispatch({ type: 'INCREMENT' });
-store.dispatch({
+const contextMap = store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
   interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), firstInterceptor, inBetween, lastInterceptor]
 });
+
+console.log('FINAL CONTEXT MAP', contextMap);
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
