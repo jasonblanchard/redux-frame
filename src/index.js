@@ -72,7 +72,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
     // Immediately send this wrapped action along through Redux. Mostly used for debugging
     next(action);
 
-    const { interceptors, type } = action;
+    const { interceptors = [], type } = action;
 
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
