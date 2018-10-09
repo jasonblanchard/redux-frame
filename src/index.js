@@ -62,13 +62,14 @@ function createDoEffects(effectHandlers) {
   }
 }
 
-const dispatchOriginalAction = {
-  after: context => mergeWithEffects(context, { dispatch: context.coeffects.action })
+const forwardAction = {
+  id: 'forwardAction',
+  after: context => mergeWithEffects(context, { forwardAction: null })
 }
 
 export const reduxFrame = (options = {}) => store => next => action => {
   if(isFrame(action.type)) {
-    // Immediately forward the original action along through Redux. Mostly used for debugging
+    // Immediately send this wrapped action along through Redux. Mostly used for debugging
     next(action);
 
     const { interceptors, type } = action;
@@ -76,6 +77,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
     effectHandlers.dispatch = (coeffects, action) => store.dispatch(action)
+    effectHandlers.forwardAction = coeffects => store.dispatch(coeffects.action);
     coeffectHandlers.state = (coeffects, state) => state;
 
     // Initialize context. This gets threaded through all interceptors.
@@ -84,7 +86,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
         action: normalizeFramedAction(action)
       },
       effects: {},
-      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), dispatchOriginalAction, ...interceptors],
+      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), forwardAction, ...interceptors],
       stack: []
     }
 

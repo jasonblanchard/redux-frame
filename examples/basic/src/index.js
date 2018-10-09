@@ -43,11 +43,16 @@ const doSomething = {
   after: context => mergeWithEffects(context, { 'doSomething': null })
 }
 
+const dispatchSomethingElse = {
+  id: 'dispatchSomethingElse',
+  after: context => mergeWithEffects(context, { 'dispatch': { type: 'INCREMENT' }})
+}
+
 store.dispatch({ type: 'INCREMENT' });
 const contextMap = store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), doSomething]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), doSomething, dispatchSomethingElse]
 });
 
 console.log('FINAL CONTEXT MAP', contextMap);

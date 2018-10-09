@@ -53,10 +53,7 @@ describe('integration with Redux', () => {
     });
 
     expect(contextMap.effects).toEqual({
-      dispatch: {
-        'type': 'TEST',
-        'someKey': 'tested'
-      }
+      forwardAction: null
     });
 
     expect(contextMap.stack.length).toEqual(3);
@@ -176,4 +173,41 @@ describe('integration with Redux', () => {
       }
     }, 'arg');
   });
+});
+
+it('calls the built in dispatch effect handler', () => {
+  const mockStore = {
+    dispatch: jest.fn(),
+    getState: () => ({})
+  }
+
+  const dispatchSomethingElse = {
+    id: 'dispatchSomethingElse',
+    after: context => mergeWithEffects(context, { 'dispatch': { type: 'ANOTHER_ACTION' }})
+  }
+
+  const fn = reduxFrame()(mockStore)(() => {});
+
+  fn({
+    type: frame('TEST'),
+    interceptors: [dispatchSomethingElse]
+  });
+
+  expect(mockStore.dispatch).toBeCalledWith({ type: 'ANOTHER_ACTION' });
+});
+
+it('calls the built in forwardAction effect handler with the original action', () => {
+  const mockStore = {
+    dispatch: jest.fn(),
+    getState: () => ({})
+  }
+
+  const fn = reduxFrame()(mockStore)(() => {});
+
+  fn({
+    type: frame('TEST'),
+    interceptors: []
+  });
+
+  expect(mockStore.dispatch).toBeCalledWith({ type: 'TEST' });
 });
