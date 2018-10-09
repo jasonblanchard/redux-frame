@@ -1,6 +1,6 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { FRAME_PREFIX, frame, injectCoeffects, reduxFrame, mergeWithEffects } from '../src';
+import { FRAME_PREFIX, frame, injectCoeffects, reduxFrame, mergeWithEffects, dispatchAction } from '../src';
 
 it('frame', () => {
   expect(frame('TEST')).toEqual(`${FRAME_PREFIX}/TEST`);
@@ -35,11 +35,10 @@ describe('integration with Redux', () => {
     );
   })
 
-  it('creates the right context map', () => {
+  it('creates the right context map with all defaults', () => {
     const contextMap = store.dispatch({
       type: frame('TEST'),
-      someKey: 'tested',
-      interceptors: []
+      someKey: 'tested'
     });
 
     expect(contextMap.coeffects).toEqual({
@@ -52,12 +51,10 @@ describe('integration with Redux', () => {
       }
     });
 
-    expect(contextMap.effects).toEqual({
-      forwardAction: null
-    });
+    expect(contextMap.effects).toEqual({});
 
-    expect(contextMap.stack.length).toEqual(3);
-    expect(contextMap.queue.length).toEqual(3);
+    expect(contextMap.stack.length).toEqual(2);
+    expect(contextMap.queue.length).toEqual(2);
   });
 
   it('does the stack and queue in the right order', () => {
@@ -181,32 +178,11 @@ it('calls the built in dispatch effect handler', () => {
     getState: () => ({})
   }
 
-  const dispatchSomethingElse = {
-    id: 'dispatchSomethingElse',
-    after: context => mergeWithEffects(context, { 'dispatch': { type: 'ANOTHER_ACTION' }})
-  }
-
   const fn = reduxFrame()(mockStore)(() => {});
 
   fn({
     type: frame('TEST'),
-    interceptors: [dispatchSomethingElse]
-  });
-
-  expect(mockStore.dispatch).toBeCalledWith({ type: 'ANOTHER_ACTION' });
-});
-
-it('calls the built in forwardAction effect handler with the original action', () => {
-  const mockStore = {
-    dispatch: jest.fn(),
-    getState: () => ({})
-  }
-
-  const fn = reduxFrame()(mockStore)(() => {});
-
-  fn({
-    type: frame('TEST'),
-    interceptors: []
+    interceptors: [dispatchAction]
   });
 
   expect(mockStore.dispatch).toBeCalledWith({ type: 'TEST' });

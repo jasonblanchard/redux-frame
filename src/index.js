@@ -62,9 +62,9 @@ function createDoEffects(effectHandlers) {
   }
 }
 
-const forwardAction = {
-  id: 'forwardAction',
-  after: context => mergeWithEffects(context, { forwardAction: null })
+export const dispatchAction = {
+  id: 'dispatchAction',
+  after: context => mergeWithEffects(context, { dispatch: null })
 }
 
 export const reduxFrame = (options = {}) => store => next => action => {
@@ -76,8 +76,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
 
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
-    effectHandlers.dispatch = (coeffects, action) => store.dispatch(action)
-    effectHandlers.forwardAction = coeffects => store.dispatch(coeffects.action);
+    effectHandlers.dispatch = (coeffects, action) => store.dispatch(action || coeffects.action)
     coeffectHandlers.state = (coeffects, state) => state;
 
     // Initialize context. This gets threaded through all interceptors.
@@ -86,7 +85,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
         action: normalizeFramedAction(action)
       },
       effects: {},
-      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), forwardAction, ...interceptors],
+      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), ...interceptors],
       stack: []
     }
 

@@ -5,7 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { frame, reduxFrame, injectCoeffects, mergeWithEffects } from './redux-frame';
+import { frame, reduxFrame, injectCoeffects, mergeWithEffects, dispatchAction } from './redux-frame';
 
 function reducer(state = {num: 0}, action) {
   switch (action.type) {
@@ -43,16 +43,11 @@ const doSomething = {
   after: context => mergeWithEffects(context, { 'doSomething': null })
 }
 
-const dispatchSomethingElse = {
-  id: 'dispatchSomethingElse',
-  after: context => mergeWithEffects(context, { 'dispatch': { type: 'INCREMENT' }})
-}
-
 store.dispatch({ type: 'INCREMENT' });
 const contextMap = store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), doSomething, dispatchSomethingElse]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), doSomething, dispatchAction]
 });
 
 console.log('FINAL CONTEXT MAP', contextMap);
