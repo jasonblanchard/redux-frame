@@ -27,8 +27,8 @@ const store = createStore(
   composeEnhancers(
     applyMiddleware(reduxFrame({
       coeffectHandlers: {
-        coeffectTester: () => {
-          return 'test';
+        coeffectTester: (coeffects, arg1, arg2) => {
+          return `testing ${arg1} ${arg2}`;
         }
       },
       effectHandlers: {}
@@ -36,8 +36,8 @@ const store = createStore(
   )
 )
 
-const beforeLoggerInterceptor = {
-  before: context => console.log('beforeLoggerInterceptor', context),
+const firstInterceptor = {
+  before: context => console.log('should be the first thing', context),
   after: context => console.log('should be the last thing', context)
 }
 
@@ -46,15 +46,15 @@ const inBetween = {
   after: context => console.log('inBetween after')
 }
 
-const afterLoggerInterceptor = {
-  after: context => console.log('afterLoggerInterceptor', context)
+const lastInterceptor = {
+  after: context => console.log('lastInterceptor', context)
 }
 
 store.dispatch({ type: 'INCREMENT' });
 store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa'), beforeLoggerInterceptor, inBetween, afterLoggerInterceptor]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), firstInterceptor, inBetween, lastInterceptor]
 });
 
 ReactDOM.render(<App />, document.getElementById('root'));
