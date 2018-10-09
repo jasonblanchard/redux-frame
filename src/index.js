@@ -20,7 +20,7 @@ function normalizeFramedAction(action) {
   return normalizedAction;
 }
 
-function mergeWithEffects(context, effect) {
+export function mergeWithEffects(context, effect) {
   return {
     ...context,
     effects: {
@@ -44,7 +44,7 @@ export function injectCoeffects(coeffectId, ...args) {
   return {
     before: context => ({
       ...context,
-      pendingCoeffectHandler: {
+        pendingCoeffectHandler: {
         coeffectId,
         args
       }
@@ -54,7 +54,11 @@ export function injectCoeffects(coeffectId, ...args) {
 
 function createDoEffects(effectHandlers) {
   return {
-    after: context => Object.keys(context.effects).forEach(effectId => effectHandlers[effectId](context.coeffects, context.effects[effectId]))
+    after: context => {
+      Object.keys(context.effects).forEach(effectId => {
+        if (effectHandlers[effectId]) effectHandlers[effectId](context.coeffects, context.effects[effectId]);
+      })
+    }
   }
 }
 
@@ -62,14 +66,14 @@ const dispatchOriginalAction = {
   after: context => mergeWithEffects(context, { dispatch: context.coeffects.action })
 }
 
-export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }) => store => next => action => {
+export const reduxFrame = (options = {}) => store => next => action => {
   if(isFrame(action.type)) {
     // Immediately forward the original action along through Redux. Mostly used for debugging
     next(action);
 
     const { interceptors, type } = action;
 
-    const { effectHandlers, coeffectHandlers } = config;
+    const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
     effectHandlers.dispatch = (coeffects, action) => store.dispatch(action)
     coeffectHandlers.state = (coeffects, state) => state;
@@ -93,7 +97,7 @@ export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }
       // TODO: Instead of handling this here, should it tack on an additional interceptor before moving on?
       if (updatedContext.pendingCoeffectHandler) {
         const { coeffectId, args } = updatedContext.pendingCoeffectHandler;
-        updatedContext.coeffects[coeffectId] = coeffectHandlers[coeffectId](updatedContext.coeffects, ...args)
+        if (coeffectHandlers[coeffectId]) updatedContext.coeffects[coeffectId] = coeffectHandlers[coeffectId](updatedContext.coeffects, ...args)
         delete updatedContext.pendingCoeffectHandler;
       }
 
