@@ -20,12 +20,6 @@ function normalizeFramedAction(action) {
   return normalizedAction;
 }
 
-function createDoEffects(effectHandlers) {
-  return {
-    after: context => Object.keys(context.effects).forEach(effectId => effectHandlers[effectId](context.coeffects, context.effects[effectId]))
-  }
-}
-
 export function mergeWithEffects(context, effect) {
   return {
     ...context,
@@ -55,6 +49,12 @@ export function injectCoeffects(coeffectId, ...args) {
         args
       }
     })
+  }
+}
+
+function createDoEffects(effectHandlers) {
+  return {
+    after: context => Object.keys(context.effects).forEach(effectId => effectHandlers[effectId](context.coeffects, context.effects[effectId]))
   }
 }
 
