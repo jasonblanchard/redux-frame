@@ -76,7 +76,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
 
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
-    effectHandlers.dispatch = (coeffects, action) => store.dispatch(action || coeffects.action)
+    effectHandlers.dispatch = (coeffects) => store.dispatch(coeffects.action)
     coeffectHandlers.state = (coeffects, state) => state;
 
     // Initialize context. This gets threaded through all interceptors.
