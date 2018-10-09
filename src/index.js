@@ -1,4 +1,4 @@
-const FRAME_PREFIX = '@@REDUX_FRAME';
+export const FRAME_PREFIX = '@@REDUX_FRAME';
 
 export function frame(type) {
   return `${FRAME_PREFIX}/${type}`;
@@ -20,7 +20,7 @@ function normalizeFramedAction(action) {
   return normalizedAction;
 }
 
-export function mergeWithEffects(context, effect) {
+function mergeWithEffects(context, effect) {
   return {
     ...context,
     effects: {
@@ -30,7 +30,7 @@ export function mergeWithEffects(context, effect) {
   }
 }
 
-export function mergeWithCoeffects(context, coeffect) {
+function mergeWithCoeffects(context, coeffect) {
   return {
     ...context,
     coeffects: {
@@ -107,7 +107,7 @@ export const reduxFrame = (config = { effectHandlers: {}, coeffectHandlers: {} }
       updatedContext = interceptor.after ? interceptor.after(updatedContext) || updatedContext : updatedContext;
       return updatedContext;
     }, contextAfterBeforeHandlers);
-    
+
     return contextAfterAfterHandlers;
   }
 
