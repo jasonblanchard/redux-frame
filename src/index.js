@@ -67,6 +67,11 @@ export const dispatchAction = {
   after: context => mergeWithEffects(context, { dispatch: null })
 }
 
+export const logger = {
+  id: 'logger',
+  after: context => mergeWithEffects(context, { logger: context })
+}
+
 export const reduxFrame = (options = {}) => store => next => action => {
   if(isFrame(action.type)) {
     // Immediately send this wrapped action along through Redux. Mostly used for debugging
@@ -77,6 +82,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
     effectHandlers.dispatch = (coeffects) => store.dispatch(coeffects.action)
+    effectHandlers.logger = (coeffects, context) => console.log(action.type, context);
     coeffectHandlers.state = (coeffects, state) => state;
 
     // Initialize context. This gets threaded through all interceptors.

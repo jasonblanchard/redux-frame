@@ -5,7 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { frame, reduxFrame, injectCoeffects, mergeWithEffects, dispatchAction } from './redux-frame';
+import { frame, reduxFrame, injectCoeffects, mergeWithEffects, dispatchAction, logger } from './redux-frame';
 
 function reducer(state = {num: 0}, action) {
   switch (action.type) {
@@ -44,13 +44,11 @@ const doSomething = {
 }
 
 store.dispatch({ type: 'INCREMENT' });
-const contextMap = store.dispatch({
+store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), doSomething, dispatchAction]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), logger, doSomething, dispatchAction]
 });
-
-console.log('FINAL CONTEXT MAP', contextMap);
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
