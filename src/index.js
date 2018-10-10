@@ -52,7 +52,7 @@ export function injectCoeffects(coeffectId, ...args) {
   }
 }
 
-export function addEffect(effectId, args) {
+export function effect(effectId, args) {
   return {
     after: context => mergeWithEffects(context, { [effectId]: args})
   }
@@ -68,14 +68,19 @@ function createDoEffects(effectHandlers, dispatch) {
   }
 }
 
-export const dispatchAction = {
+const dispatchAction = {
   id: 'dispatchAction',
   after: context => mergeWithEffects(context, { dispatch: null })
 }
 
-export const logger = {
-  id: 'logger',
-  after: context => mergeWithEffects(context, { logger: context })
+const debug = {
+  id: 'debug',
+  after: context => mergeWithEffects(context, { debug: context })
+}
+
+export const interceptors = {
+  dispatchAction,
+  debug
 }
 
 export const reduxFrame = (options = {}) => store => next => action => {
@@ -88,7 +93,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
     // Setup some built-in effect handlers.
     effectHandlers.dispatch = (coeffects) => store.dispatch(coeffects.action)
-    effectHandlers.logger = (coeffects, context) => console.log(action.type, context);
+    effectHandlers.debug = (coeffects, context) => console.log(action.type, context);
     coeffectHandlers.state = (coeffects, state) => state;
 
     // Initialize context. This gets threaded through all interceptors.

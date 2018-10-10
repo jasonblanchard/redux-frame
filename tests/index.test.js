@@ -1,6 +1,15 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { FRAME_PREFIX, frame, injectCoeffects, reduxFrame, mergeWithEffects, dispatchAction } from '../src';
+import {
+  effect,
+  FRAME_PREFIX,
+  frame,
+  injectCoeffects,
+  interceptors,
+  mergeWithCoeffects,
+  mergeWithEffects,
+  reduxFrame,
+} from '../src';
 
 it('frame', () => {
   expect(frame('TEST')).toEqual(`${FRAME_PREFIX}/TEST`);
@@ -187,8 +196,49 @@ it('calls the built in dispatch effect handler', () => {
 
   fn({
     type: frame('TEST'),
-    interceptors: [dispatchAction]
+    interceptors: [interceptors.dispatchAction]
   });
 
   expect(mockStore.dispatch).toBeCalledWith({ type: 'TEST' });
+});
+
+describe('effect', () => {
+  it('creates an interceptor that adds the effect key and args to context.effects', () => {
+    const interceptor = effect('someEffectId', {someArg: 'someArgValue'});
+    const context = {};
+    const result = interceptor.after(context);
+    expect(result.effects.someEffectId).toEqual({someArg: 'someArgValue'});
+  });
+});
+
+describe('mergeWithEffects', () => {
+  it('merges the effect with effects', () => {
+    const context = {
+      effects: {
+        someEffect: null
+      }
+    }
+
+    const result = mergeWithEffects(context, { newEffect: null });
+    expect(result.effects).toEqual({
+      newEffect: null,
+      someEffect: null,
+    })
+  });
+});
+
+describe('mergeWithCoeffects', () => {
+  it('merges the coeffect with coeffects', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: null
+      }
+    }
+
+    const result = mergeWithCoeffects(context, { newCoeffect: null });
+    expect(result.coeffects).toEqual({
+      newCoeffect: null,
+      someCoeffect: null,
+    })
+  });
 });

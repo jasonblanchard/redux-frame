@@ -5,7 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { frame, reduxFrame, injectCoeffects, dispatchAction, logger, addEffect } from './redux-frame';
+import { frame, reduxFrame, injectCoeffects, effect, interceptors } from './redux-frame';
 
 function reducer(state = {num: 0}, action) {
   switch (action.type) {
@@ -42,7 +42,7 @@ store.dispatch({ type: 'INCREMENT' });
 store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), logger, addEffect('doSomething'), dispatchAction]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), interceptors.debug, effect('doSomething'), interceptors.dispatchAction]
 });
 
 ReactDOM.render(<App />, document.getElementById('root'));
