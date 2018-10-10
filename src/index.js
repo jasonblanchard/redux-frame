@@ -68,8 +68,8 @@ function createDoEffects(effectHandlers, dispatch) {
   }
 }
 
-const dispatchAction = {
-  id: 'dispatchAction',
+const dispatch = {
+  id: 'dispatch',
   after: context => mergeWithEffects(context, { dispatch: null })
 }
 
@@ -79,7 +79,7 @@ const debug = {
 }
 
 export const interceptors = {
-  dispatchAction,
+  dispatch,
   debug
 }
 

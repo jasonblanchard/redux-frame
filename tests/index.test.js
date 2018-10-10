@@ -150,7 +150,7 @@ describe('integration with Redux', () => {
       }
     }
 
-    const testEffect = jest.fn((coeffects, arg1, arg2) => `tested ${arg1} ${arg2}`);
+    const testEffect = jest.fn();
 
     store = createStore(
       reducer,
@@ -182,7 +182,6 @@ describe('integration with Redux', () => {
     });
     expect(args[1]).toEqual('arg');
     expect(args[2]).toBeInstanceOf(Function);
-
   });
 });
 
@@ -196,7 +195,7 @@ it('calls the built in dispatch effect handler', () => {
 
   fn({
     type: frame('TEST'),
-    interceptors: [interceptors.dispatchAction]
+    interceptors: [interceptors.dispatch]
   });
 
   expect(mockStore.dispatch).toBeCalledWith({ type: 'TEST' });

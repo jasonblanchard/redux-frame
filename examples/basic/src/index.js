@@ -42,7 +42,7 @@ store.dispatch({ type: 'INCREMENT' });
 store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), interceptors.debug, effect('doSomething'), interceptors.dispatchAction]
+  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), interceptors.debug, effect('doSomething'), interceptors.dispatch]
 });
 
 ReactDOM.render(<App />, document.getElementById('root'));
