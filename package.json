@@ -1,13 +1,13 @@
 {
   "name": "redux-frame",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "Yet another side-effect management library for Redux",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest --env node --config .jestrc.json",
     "build": "babel src -d lib"
   },
-  "author": "",
+  "author": "jasonblanchard",
   "license": "ISC",
   "devDependencies": {
     "@babel/cli": "^7.1.2",
