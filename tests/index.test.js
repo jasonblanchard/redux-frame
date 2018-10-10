@@ -161,14 +161,19 @@ describe('integration with Redux', () => {
       interceptors: [doTestEffectInterceptor]
     });
 
-    expect(testEffect).toBeCalledWith({
+    expect(testEffect).toBeCalled();
+    const args = testEffect.mock.calls[0];
+    expect(args[0]).toEqual({
       action: {
         type: 'TEST'
       },
       state: {
         tested: false
       }
-    }, 'arg');
+    });
+    expect(args[1]).toEqual('arg');
+    expect(args[2]).toBeInstanceOf(Function);
+
   });
 });
 
