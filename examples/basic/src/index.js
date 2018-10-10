@@ -27,7 +27,8 @@ const store = createStore(
   composeEnhancers(
     applyMiddleware(reduxFrame({
       coeffectHandlers: {
-        coeffectTester: (coeffects, arg1, arg2) => {
+        coeffectTester: (coeffects, args) => {
+          const { arg1, arg2 } = args;
           return `testing ${arg1} ${arg2}`;
         }
       },
@@ -42,7 +43,7 @@ store.dispatch({ type: 'INCREMENT' });
 store.dispatch({
   type: frame('TEST'),
   someKey: 'tested',
-  interceptors: [injectCoeffects('coeffectTester', 'asdfa', '1234'), interceptors.debug, effect('doSomething'), interceptors.dispatch]
+  interceptors: [injectCoeffects('coeffectTester', { arg1: 'asdfa', arg2: '1234'}), interceptors.debug, effect('doSomething'), interceptors.dispatch]
 });
 
 ReactDOM.render(<App />, document.getElementById('root'));

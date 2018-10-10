@@ -40,7 +40,7 @@ export function mergeWithCoeffects(context, coeffect) {
   }
 }
 
-export function injectCoeffects(coeffectId, ...args) {
+export function injectCoeffects(coeffectId, args) {
   return {
     before: context => ({
       ...context,
@@ -68,19 +68,15 @@ function createDoEffects(effectHandlers, dispatch) {
   }
 }
 
-const dispatch = {
-  id: 'dispatch',
-  after: context => mergeWithEffects(context, { dispatch: null })
-}
-
-const debug = {
-  id: 'debug',
-  after: context => mergeWithEffects(context, { debug: context })
-}
-
 export const interceptors = {
-  dispatch,
-  debug
+  dispatch: {
+    id: 'dispatch',
+    after: context => mergeWithEffects(context, { dispatch: null })
+  },
+  debug: {
+    id: 'debug',
+    after: context => mergeWithEffects(context, { debug: context })
+  }
 }
 
 export const reduxFrame = (options = {}) => store => next => action => {
@@ -94,7 +90,9 @@ export const reduxFrame = (options = {}) => store => next => action => {
     // Setup some built-in effect handlers.
     effectHandlers.dispatch = (coeffects) => store.dispatch(coeffects.action)
     effectHandlers.debug = (coeffects, context) => console.log(action.type, context);
-    coeffectHandlers.state = (coeffects, state) => state;
+
+    // Setup some built-in coeffect handlers.
+    coeffectHandlers.state = coeffects => store.getState();
 
     // Initialize context. This gets threaded through all interceptors.
     const context = {
@@ -102,7 +100,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
         action: normalizeFramedAction(action)
       },
       effects: {},
-      queue: [createDoEffects(effectHandlers, store.dispatch), injectCoeffects('state', store.getState()), ...interceptors],
+      queue: [createDoEffects(effectHandlers, store.dispatch), injectCoeffects('state'), ...interceptors],
       stack: []
     }
 
@@ -115,7 +113,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
       // TODO: Instead of handling this here, should it tack on an additional interceptor before moving on?
       if (updatedContext.pendingCoeffectHandler) {
         const { coeffectId, args } = updatedContext.pendingCoeffectHandler;
-        if (coeffectHandlers[coeffectId]) updatedContext.coeffects[coeffectId] = coeffectHandlers[coeffectId](updatedContext.coeffects, ...args)
+        if (coeffectHandlers[coeffectId]) updatedContext.coeffects[coeffectId] = coeffectHandlers[coeffectId](updatedContext.coeffects, args)
         delete updatedContext.pendingCoeffectHandler;
       }
 

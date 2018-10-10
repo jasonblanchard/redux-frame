@@ -16,11 +16,11 @@ it('frame', () => {
 });
 
 it('injectCoeffects', () => {
-  const interceptor = injectCoeffects('coeffectTester', 'firstArg', 'secondArg');
+  const interceptor = injectCoeffects('coeffectTester', {arg1: 'arg1Value'});
   expect(interceptor.before({})).toEqual({
     pendingCoeffectHandler: {
       coeffectId: 'coeffectTester',
-      args: ['firstArg', 'secondArg']
+      args: {arg1: 'arg1Value'}
     }
   });
 });
@@ -127,14 +127,14 @@ describe('integration with Redux', () => {
       reducer,
       applyMiddleware(reduxFrame({
         coeffectHandlers: {
-          testCoeffect: (coeffects, arg1, arg2) => `tested ${arg1} ${arg2}`
+          testCoeffect: (coeffects, args) => `tested ${args.arg1} ${args.arg2}`
         }
       }))
     );
 
     const contextMap = store.dispatch({
       type: frame('TEST'),
-      interceptors: [injectCoeffects('testCoeffect', 'arg1', 'arg2')]
+      interceptors: [injectCoeffects('testCoeffect', {arg1: 'arg1', arg2: 'arg2'})]
     });
 
     expect(contextMap.coeffects.testCoeffect).toEqual('tested arg1 arg2');
