@@ -52,11 +52,17 @@ export function injectCoeffects(coeffectId, ...args) {
   }
 }
 
-function createDoEffects(effectHandlers) {
+export function addEffect(effectId, args) {
+  return {
+    after: context => mergeWithEffects(context, { [effectId]: args})
+  }
+}
+
+function createDoEffects(effectHandlers, dispatch) {
   return {
     after: context => {
       Object.keys(context.effects).forEach(effectId => {
-        if (effectHandlers[effectId]) effectHandlers[effectId](context.coeffects, context.effects[effectId]);
+        if (effectHandlers[effectId]) effectHandlers[effectId](context.coeffects, context.effects[effectId], dispatch);
       })
     }
   }
@@ -91,7 +97,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
         action: normalizeFramedAction(action)
       },
       effects: {},
-      queue: [createDoEffects(effectHandlers), injectCoeffects('state', store.getState()), ...interceptors],
+      queue: [createDoEffects(effectHandlers, store.dispatch), injectCoeffects('state', store.getState()), ...interceptors],
       stack: []
     }
 
