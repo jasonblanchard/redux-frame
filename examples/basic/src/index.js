@@ -5,7 +5,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { createStore, applyMiddleware, compose } from 'redux'
 
-import { frame, reduxFrame, injectCoeffects, mergeWithEffects, dispatchAction, logger, addEffect } from './redux-frame';
+import { frame, reduxFrame, injectCoeffects, dispatchAction, logger, addEffect } from './redux-frame';
 
 function reducer(state = {num: 0}, action) {
   switch (action.type) {
