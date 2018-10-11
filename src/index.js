@@ -187,10 +187,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
       invokeInterceptors.bind(null, 'before', config),
       changeDirection,
       invokeInterceptors.bind(null, 'after', config)
-    ]
-      .reduce((context, fn) => {
-        return fn(context);
-      }, context);
+    ].reduce((context, fn) => fn(context), context);
   }
 
   next(action);
