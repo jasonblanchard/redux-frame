@@ -382,5 +382,8 @@ describe('debug', () => {
     });
 
     expect(console.log).toBeCalled();
+    const args = console.log.mock.calls[0];
+    expect(args[0]).toEqual('@@REDUX_FRAME/TEST');
+    expect(Object.keys(args[1])).toEqual(['coeffects', 'effects', 'queue', 'stack']);
   });
 });
