@@ -94,7 +94,8 @@ export function enqueue(context, interceptors) {
 }
 
 function changeDirection(context) {
-  return enqueue({ ...context, ...{ queue: [] } }, context.stack);
+  const updatedContext = enqueue({ ...context, ...{ queue: [], stack: [] } }, context.stack);
+  return updatedContext;
 }
 
 function handleInjectedCoeffect(context, coeffectHandlers = {}) {
