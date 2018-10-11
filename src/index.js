@@ -153,14 +153,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
     next(action);
 
     const { interceptors = [], type } = action;
-
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
-    // Setup some built-in effect handlers.
-    // effectHandlers.dispatch = (coeffects) => store.dispatch(coeffects.action)
-    // effectHandlers.debug = (coeffects, context) => console.log(action.type, context);
-
-    // Setup some built-in coeffect handlers.
-    // coeffectHandlers.state = coeffects => store.getState();
 
     const config = {
       effectHandlers: {
