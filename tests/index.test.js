@@ -338,3 +338,20 @@ describe('coeffectToAction', () => {
     });
   });
 });
+
+it('passes the acion through when it is not framed', () => {
+  const mockStore = {
+    dispatch: () => {},
+    getState: () => ({}),
+  };
+
+  const next = jest.fn();
+
+  const fn = reduxFrame()(mockStore)(next);
+
+  fn({
+    type: 'TEST',
+  });
+
+  expect(next).toBeCalledWith({ type: 'TEST' });
+});
