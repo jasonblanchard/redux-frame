@@ -198,8 +198,8 @@ it('calls registered effect handlers', () => {
 
   fn({
     type: frame('TEST'),
-    interceptors: [effect('testEffect', { testEffect: 'arg' })]
-  })
+    interceptors: [effect('testEffect', { testEffect: 'arg' })],
+  });
 
   expect(testEffect).toBeCalled();
   const args = testEffect.mock.calls[0];
