@@ -2,6 +2,7 @@ import { createStore, applyMiddleware, compose } from 'redux'
 
 import {
   effect,
+  enqueue,
   FRAME_PREFIX,
   frame,
   injectCoeffects,
@@ -187,6 +188,40 @@ it('calls registered effect handlers', () => {
   expect(args[2]).toBeInstanceOf(Function);
 });
 
+it('interceptors can enqueue additional interceptors', () => {
+  const mockStore = {
+    dispatch: () => {},
+    getState: () => ({})
+  }
+
+  const fn = reduxFrame()(mockStore)(() => {});
+
+  const addToCoeffects = {
+    before: context => mergeWithCoeffects(context, {test: 'value'})
+  }
+
+  const addInterceptor = {
+    before: context => enqueue(context, [addToCoeffects])
+  }
+
+  const contextMap = fn({
+    type: frame('TEST'),
+    interceptors: [addInterceptor]
+  });
+
+  expect(contextMap.coeffects.test).toEqual('value');
+});
+
+it('enqueue adds interceptors to queue', () => {
+  const context = {
+    queue: [1, 2, 3]
+  }
+
+  const result = enqueue(context, [4, 5, 6]);
+
+  expect(result.queue).toEqual([1, 2, 3, 4, 5, 6]);
+})
+
 describe('integration with Redux', () => {
   it('creates the right context map with all defaults', () => {
     function reducer(state = {tested: false}, action) {
@@ -219,8 +254,5 @@ describe('integration with Redux', () => {
     });
 
     expect(contextMap.effects).toEqual({});
-
-    expect(contextMap.stack.length).toEqual(2);
-    expect(contextMap.queue.length).toEqual(2);
   });
 });

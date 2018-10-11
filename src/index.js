@@ -42,9 +42,10 @@ export function mergeWithCoeffects(context, coeffect) {
 
 export function injectCoeffects(coeffectId, args) {
   return {
+    id: 'indjectCoeffects',
     before: context => ({
       ...context,
-        pendingCoeffectHandler: {
+      pendingCoeffectHandler: {
         coeffectId,
         args
       }
@@ -60,6 +61,7 @@ export function effect(effectId, args) {
 
 function createDoEffects(effectHandlers, dispatch) {
   return {
+    id: 'doEffects',
     after: context => {
       Object.keys(context.effects).forEach(effectId => {
         if (effectHandlers[effectId]) effectHandlers[effectId](context.coeffects, context.effects[effectId], dispatch);
@@ -77,6 +79,53 @@ export const interceptors = {
     id: 'debug',
     after: context => mergeWithEffects(context, { debug: context })
   }
+}
+
+export function enqueue(context, interceptors) {
+  return {
+    ...context,
+    ...{ queue: [...context.queue, ...interceptors] }
+  }
+}
+
+function changeDirection(context) {
+  return enqueue(context, context.stack);
+}
+
+function handleInjectedCoeffect(coeffectHandlers = {}, coeffectId, args) {
+  return {
+    id: 'handleInjectedCoeffect',
+    before: context => {
+      const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context.coeffects, args) : null;
+      return mergeWithCoeffects(context, { [coeffectId]: result });
+    }
+  }
+}
+
+// Putting context as last argument so we can partially apply the first two args with `bind`. Thanks, Javascript.
+function invokeInterceptors(direction, coeffectHandlers, context, ) {
+  const { queue } = context;
+  if (queue.length === 0) {
+    return context;
+  }
+
+  const [ interceptor, ...rest ] = queue;
+
+  let updatedContext = {
+    ...context,
+    ...{ queue: rest },
+    ...{ stack: [interceptor, ...context.stack]}
+  };
+
+  updatedContext = interceptor[direction] ? interceptor[direction](updatedContext) || updatedContext : updatedContext;
+
+  if (updatedContext.pendingCoeffectHandler) {
+    const { coeffectId, args } = updatedContext.pendingCoeffectHandler;
+    updatedContext = enqueue(updatedContext, [handleInjectedCoeffect(coeffectHandlers, coeffectId, args)]);
+    delete updatedContext.pendingCoeffectHandler;
+  }
+
+  return invokeInterceptors(direction, coeffectHandlers, updatedContext);
 }
 
 export const reduxFrame = (options = {}) => store => next => action => {
@@ -104,31 +153,17 @@ export const reduxFrame = (options = {}) => store => next => action => {
       stack: []
     }
 
-    // Invoke functions in stack with context, return value is new context
-    // TODO: I think these need to be recursive function calls so that the stack can be modified by the handler
-    const contextAfterBeforeHandlers = context.queue.reduce((updatedContext, interceptor) => {
-      updatedContext = interceptor.before ? interceptor.before(updatedContext) || updatedContext : updatedContext;
-
-      // Handle pending coeffect handler
-      // TODO: Instead of handling this here, should it tack on an additional interceptor before moving on?
-      if (updatedContext.pendingCoeffectHandler) {
-        const { coeffectId, args } = updatedContext.pendingCoeffectHandler;
-        if (coeffectHandlers[coeffectId]) updatedContext.coeffects[coeffectId] = coeffectHandlers[coeffectId](updatedContext.coeffects, args)
-        delete updatedContext.pendingCoeffectHandler;
-      }
-
-      // Build up stack of interceptors we have already walked so we can execute their `after` functions later.
-      updatedContext.stack = [interceptor, ...updatedContext.stack]
-      return updatedContext;
-    }, context);
-
-    // Invoke stack of `after` handlers.
-    const contextAfterAfterHandlers = contextAfterBeforeHandlers.stack.reduce((updatedContext, interceptor) => {
-      updatedContext = interceptor.after ? interceptor.after(updatedContext) || updatedContext : updatedContext;
-      return updatedContext;
-    }, contextAfterBeforeHandlers);
-
-    return contextAfterAfterHandlers;
+    // Need to pass around coeffectHandlers so that they can be invoked by handleInjectedCoeffect.
+    // This is because we only know the coeffect handler map at reduxFrame() config time.
+    // TODO: Consider a registration process at stores these in module scope so that they can be invoked directly by the caller. Same for effect handlers?
+    return [
+      invokeInterceptors.bind(null, 'before', coeffectHandlers),
+      changeDirection,
+      invokeInterceptors.bind(null, 'after', coeffectHandlers)
+    ]
+      .reduce((context, fn) => {
+        return fn(context);
+      }, context);
   }
 
   next(action);
