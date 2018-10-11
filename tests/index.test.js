@@ -1,6 +1,7 @@
 import { createStore, applyMiddleware, compose } from 'redux'
 
 import {
+  coeffectToAction,
   effect,
   enqueue,
   FRAME_PREFIX,
@@ -278,5 +279,62 @@ describe('integration with Redux', () => {
     });
 
     expect(contextMap.effects).toEqual({});
+  });
+});
+
+describe('coeffectToAction', () => {
+  it('uses from key as to key', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: 'test',
+        action: {
+          type: 'TEST'
+        }
+      },
+    }
+
+    const result = coeffectToAction({ from: 'someCoeffect' }).before(context);
+    expect(result.coeffects.action).toEqual({
+      type: 'TEST',
+      someCoeffect: 'test'
+    });
+  });
+
+  it('uses to key', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: 'test',
+        action: {
+          type: 'TEST'
+        }
+      },
+    }
+
+    const result = coeffectToAction({ from: 'someCoeffect', to: 'test' }).before(context);
+    expect(result.coeffects.action).toEqual({
+      type: 'TEST',
+      test: 'test'
+    });
+  });
+
+  it('spread: true', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: {
+          a: 'a',
+          b: 'b'
+        },
+        action: {
+          type: 'TEST'
+        }
+      },
+    }
+
+    const result = coeffectToAction({ from: 'someCoeffect', spread: true }).before(context);
+    expect(result.coeffects.action).toEqual({
+      type: 'TEST',
+      a: 'a',
+      b: 'b'
+    });
   });
 });

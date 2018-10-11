@@ -86,6 +86,26 @@ export const interceptors = {
   debug
 }
 
+// Is this worth it?
+export function coeffectToAction(args = {}) {
+  // TODO: Let this be a deep path
+  return  {
+    before: context => {
+      const { coeffects } = context;
+      const { action = {} } = coeffects;
+      const { from, spread = false } = args
+      const coeffect = coeffects[from];
+      const to = args.to || from;
+
+      const updatedAction = spread ? { ...action, ...coeffect } : { ...action, [to]: coeffect }
+
+      return mergeWithCoeffects(context, {
+        action: updatedAction
+      })
+    }
+  }
+}
+
 export function enqueue(context, interceptors) {
   return {
     ...context,

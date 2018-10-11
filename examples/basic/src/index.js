@@ -4,14 +4,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import './index.css';
-import { frame, interceptors as reduxFrameInterceptors, injectCoeffects } from './redux-frame';
+import { coeffectToAction, frame, interceptors as reduxFrameInterceptors, injectCoeffects } from './redux-frame';
 import App from './App';
-import interceptors from './interceptors';
 import store from './store';
 
 store.dispatch({
   type: frame('INITIALIZE'),
-  interceptors: [reduxFrameInterceptors.debug, injectCoeffects('defaultsFromLocalStorage', { key: 'stuff' }), interceptors.addDefaultsToActionPayload, reduxFrameInterceptors.dispatch]
+  interceptors: [reduxFrameInterceptors.debug, injectCoeffects('defaultsFromLocalStorage', { key: 'stuff' }), coeffectToAction({ from: 'defaultsFromLocalStorage', to: 'stuff' }), reduxFrameInterceptors.dispatch]
 });
 
 ReactDOM.render(

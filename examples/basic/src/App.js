@@ -33,6 +33,9 @@ class App extends Component {
         </form>
         {this.props.stuff.map((thing, index) => <div key={index}>{thing}</div>)}
         <button onClick={this.props.onClickClear}>clear</button>
+        <p>
+          Refresh the page to see the stuff loaded from the localStorage cache
+        </p>
       </div>
     );
   }
