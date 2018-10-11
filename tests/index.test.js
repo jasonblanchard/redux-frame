@@ -14,7 +14,7 @@ import {
 } from '../src';
 
 it('frame', () => {
-  expect(frame('TEST')).toEqual(`${FRAME_PREFIX}/TEST`);
+  expect(frame('TEST')).toEqual(`${FRAME_PREFIX}/TEasdfST`);
 });
 
 it('injectCoeffects', () => {
