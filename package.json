@@ -8,7 +8,7 @@
     "build": "babel src -d lib",
     "lint": "eslint src/ tests/",
     "coverage": "npm run test -- --coverage",
-    "coveralls": "npm run coverage --coverageReporters=text-lcov | coveralls"
+    "coveralls": "npm run coverage -- --coverageReporters=text-lcov | coveralls"
   },
   "author": "jasonblanchard",
   "license": "ISC",
