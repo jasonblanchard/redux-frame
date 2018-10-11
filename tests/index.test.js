@@ -1,4 +1,4 @@
-import { createStore, applyMiddleware, compose } from 'redux'
+import { createStore, applyMiddleware } from 'redux';
 
 import {
   coeffectToAction,
@@ -10,7 +10,7 @@ import {
   interceptors,
   mergeWithCoeffects,
   mergeWithEffects,
-  reduxFrame
+  reduxFrame,
 } from '../src';
 
 it('frame', () => {
@@ -18,28 +18,28 @@ it('frame', () => {
 });
 
 it('injectCoeffects', () => {
-  const interceptor = injectCoeffects('coeffectTester', {arg1: 'arg1Value'});
+  const interceptor = injectCoeffects('coeffectTester', { arg1: 'arg1Value' });
   expect(interceptor.before({})).toEqual({
     coeffects: {
       pendingCoeffectHandler: {
         coeffectId: 'coeffectTester',
-        args: {arg1: 'arg1Value'}
-      }
-    }
+        args: { arg1: 'arg1Value' },
+      },
+    },
   });
 });
 
 it('calls the built in dispatch effect handler', () => {
   const mockStore = {
     dispatch: jest.fn(),
-    getState: () => ({})
-  }
+    getState: () => ({}),
+  };
 
   const fn = reduxFrame()(mockStore)(() => {});
 
   fn({
     type: frame('TEST'),
-    interceptors: [interceptors.dispatch]
+    interceptors: [interceptors.dispatch],
   });
 
   expect(mockStore.dispatch).toBeCalledWith({ type: 'TEST' });
@@ -47,10 +47,10 @@ it('calls the built in dispatch effect handler', () => {
 
 describe('effect', () => {
   it('creates an interceptor that adds the effect key and args to context.effects', () => {
-    const interceptor = effect('someEffectId', {someArg: 'someArgValue'});
+    const interceptor = effect('someEffectId', { someArg: 'someArgValue' });
     const context = {};
     const result = interceptor.after(context);
-    expect(result.effects.someEffectId).toEqual({someArg: 'someArgValue'});
+    expect(result.effects.someEffectId).toEqual({ someArg: 'someArgValue' });
   });
 });
 
@@ -58,15 +58,15 @@ describe('mergeWithEffects', () => {
   it('merges the effect with effects', () => {
     const context = {
       effects: {
-        someEffect: null
-      }
-    }
+        someEffect: null,
+      },
+    };
 
     const result = mergeWithEffects(context, { newEffect: null });
     expect(result.effects).toEqual({
       newEffect: null,
       someEffect: null,
-    })
+    });
   });
 });
 
@@ -74,23 +74,23 @@ describe('mergeWithCoeffects', () => {
   it('merges the coeffect with coeffects', () => {
     const context = {
       coeffects: {
-        someCoeffect: null
-      }
-    }
+        someCoeffect: null,
+      },
+    };
 
     const result = mergeWithCoeffects(context, { newCoeffect: null });
     expect(result.coeffects).toEqual({
       newCoeffect: null,
       someCoeffect: null,
-    })
+    });
   });
 });
 
 it('does the stack and queue in the right order', () => {
   const mockStore = {
     dispatch: () => {},
-    getState: () => ({})
-  }
+    getState: () => ({}),
+  };
 
   // NOTE: These interceptors do side-effects for testing purposes. Don't do this. Instead, put the effects in effect handlers.
   const testStack = [];
@@ -104,8 +104,8 @@ it('does the stack and queue in the right order', () => {
     after: () => {
       testQueue.push('a');
       return undefined;
-    }
-  }
+    },
+  };
 
   const b = {
     before: () => {
@@ -115,8 +115,8 @@ it('does the stack and queue in the right order', () => {
     after: () => {
       testQueue.push('b');
       return undefined;
-    }
-  }
+    },
+  };
 
   const c = {
     before: () => {
@@ -126,14 +126,14 @@ it('does the stack and queue in the right order', () => {
     after: () => {
       testQueue.push('c');
       return undefined;
-    }
-  }
+    },
+  };
 
   const fn = reduxFrame()(mockStore)(() => {});
 
   fn({
     type: frame('TEST'),
-    interceptors: [a, b, c]
+    interceptors: [a, b, c],
   });
 
   expect(testStack).toEqual(['a', 'b', 'c']);
@@ -143,18 +143,18 @@ it('does the stack and queue in the right order', () => {
 it('calls registered coeffect handlers', () => {
   const mockStore = {
     dispatch: () => {},
-    getState: () => ({})
-  }
+    getState: () => ({}),
+  };
 
   const fn = reduxFrame({
     coeffectHandlers: {
-      testCoeffect: (coeffects, args) => `tested ${args.arg1} ${args.arg2}`
-    }
+      testCoeffect: (coeffects, args) => `tested ${args.arg1} ${args.arg2}`,
+    },
   })(mockStore)(() => {});
 
   const contextMap = fn({
     type: frame('TEST'),
-    interceptors: [injectCoeffects('testCoeffect', {arg1: 'arg1', arg2: 'arg2'})]
+    interceptors: [injectCoeffects('testCoeffect', { arg1: 'arg1', arg2: 'arg2' })],
   });
 
   expect(contextMap.coeffects.testCoeffect).toEqual('tested arg1 arg2');
@@ -163,19 +163,19 @@ it('calls registered coeffect handlers', () => {
 it('calls registered coeffect handlers when there are multiple', () => {
   const mockStore = {
     dispatch: () => {},
-    getState: () => ({})
-  }
+    getState: () => ({}),
+  };
 
   const fn = reduxFrame({
     coeffectHandlers: {
       testCoeffect: () => 'first coeffect',
-      anotherCoeffect: () => 'another coeffect'
-    }
+      anotherCoeffect: () => 'another coeffect',
+    },
   })(mockStore)(() => {});
 
   const contextMap = fn({
     type: frame('TEST'),
-    interceptors: [injectCoeffects('testCoeffect'), injectCoeffects('anotherCoeffect')]
+    interceptors: [injectCoeffects('testCoeffect'), injectCoeffects('anotherCoeffect')],
   });
 
   expect(contextMap.coeffects.testCoeffect).toEqual('first coeffect');
@@ -187,27 +187,27 @@ it('calls registered effect handlers', () => {
 
   const mockStore = {
     dispatch: () => {},
-    getState: () => ({})
-  }
+    getState: () => ({}),
+  };
 
   const fn = reduxFrame({
     effectHandlers: {
-      testEffect
-    }
+      testEffect,
+    },
   })(mockStore)(() => {});
 
-  const contextMap = fn({
+  fn({
     type: frame('TEST'),
     interceptors: [effect('testEffect', { testEffect: 'arg' })]
-  });
+  })
 
   expect(testEffect).toBeCalled();
   const args = testEffect.mock.calls[0];
   expect(args[0]).toEqual({
     action: {
-      type: 'TEST'
+      type: 'TEST',
     },
-    state: {}
+    state: {},
   });
   expect(args[1]).toEqual({ testEffect: 'arg' });
   expect(args[2]).toBeInstanceOf(Function);
@@ -216,22 +216,22 @@ it('calls registered effect handlers', () => {
 it('interceptors can enqueue additional interceptors', () => {
   const mockStore = {
     dispatch: () => {},
-    getState: () => ({})
-  }
+    getState: () => ({}),
+  };
 
   const fn = reduxFrame()(mockStore)(() => {});
 
   const addToCoeffects = {
-    before: context => mergeWithCoeffects(context, {test: 'value'})
-  }
+    before: context => mergeWithCoeffects(context, { test: 'value' }),
+  };
 
   const addInterceptor = {
-    before: context => enqueue(context, [addToCoeffects])
-  }
+    before: context => enqueue(context, [addToCoeffects]),
+  };
 
   const contextMap = fn({
     type: frame('TEST'),
-    interceptors: [addInterceptor]
+    interceptors: [addInterceptor],
   });
 
   expect(contextMap.coeffects.test).toEqual('value');
@@ -239,22 +239,22 @@ it('interceptors can enqueue additional interceptors', () => {
 
 it('enqueue adds interceptors to queue', () => {
   const context = {
-    queue: [1, 2, 3]
-  }
+    queue: [1, 2, 3],
+  };
 
   const result = enqueue(context, [4, 5, 6]);
 
   expect(result.queue).toEqual([1, 2, 3, 4, 5, 6]);
-})
+});
 
 describe('integration with Redux', () => {
   it('creates the right context map with all defaults', () => {
-    function reducer(state = {tested: false}, action) {
+    function reducer(state = { tested: false }, action) {
       switch (action.type) {
       case 'TEST':
-        return {...state, tested: action.someKey}
+        return { ...state, tested: action.someKey };
       default:
-        return state
+        return state;
       }
     }
 
@@ -265,17 +265,17 @@ describe('integration with Redux', () => {
 
     const contextMap = store.dispatch({
       type: frame('TEST'),
-      someKey: 'tested'
+      someKey: 'tested',
     });
 
     expect(contextMap.coeffects).toEqual({
       action: {
         type: 'TEST',
-        someKey: 'tested'
+        someKey: 'tested',
       },
       state: {
-        tested: false
-      }
+        tested: false,
+      },
     });
 
     expect(contextMap.effects).toEqual({});
@@ -288,15 +288,15 @@ describe('coeffectToAction', () => {
       coeffects: {
         someCoeffect: 'test',
         action: {
-          type: 'TEST'
-        }
+          type: 'TEST',
+        },
       },
-    }
+    };
 
     const result = coeffectToAction({ from: 'someCoeffect' }).before(context);
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
-      someCoeffect: 'test'
+      someCoeffect: 'test',
     });
   });
 
@@ -305,15 +305,15 @@ describe('coeffectToAction', () => {
       coeffects: {
         someCoeffect: 'test',
         action: {
-          type: 'TEST'
-        }
+          type: 'TEST',
+        },
       },
-    }
+    };
 
     const result = coeffectToAction({ from: 'someCoeffect', to: 'test' }).before(context);
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
-      test: 'test'
+      test: 'test',
     });
   });
 
@@ -322,19 +322,19 @@ describe('coeffectToAction', () => {
       coeffects: {
         someCoeffect: {
           a: 'a',
-          b: 'b'
+          b: 'b',
         },
         action: {
-          type: 'TEST'
-        }
+          type: 'TEST',
+        },
       },
-    }
+    };
 
     const result = coeffectToAction({ from: 'someCoeffect', spread: true }).before(context);
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
       a: 'a',
-      b: 'b'
+      b: 'b',
     });
   });
 });

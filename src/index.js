@@ -1,4 +1,4 @@
-const removeKey = (key, {[key]: _, ...rest}) => rest;
+import { removeKey } from './utils';
 
 export const FRAME_PREFIX = '@@REDUX_FRAME';
 
@@ -7,17 +7,17 @@ export function frame(type) {
 }
 
 function isFrame(type) {
-  const re = new RegExp('^' + FRAME_PREFIX + '\/');
+  const re = new RegExp('^' + FRAME_PREFIX + '/');
   return re.test(type);
 }
 
 function stripFrame(type) {
-  const re = new RegExp('^' + FRAME_PREFIX + '\/');
+  const re = new RegExp('^' + FRAME_PREFIX + '/');
   return type.replace(re, '');
 }
 
 function normalizeFramedAction(action) {
-  const normalizedAction = {...action, ...{ type: stripFrame(action.type)} }
+  const normalizedAction = { ...action, ...{ type: stripFrame(action.type) } };
   delete normalizedAction.interceptors;
   return normalizedAction;
 }
@@ -27,9 +27,9 @@ export function mergeWithEffects(context, effect) {
     ...context,
     effects: {
       ...context.effects,
-      ...effect
-    }
-  }
+      ...effect,
+    },
+  };
 }
 
 export function mergeWithCoeffects(context, coeffect) {
@@ -37,9 +37,9 @@ export function mergeWithCoeffects(context, coeffect) {
     ...context,
     coeffects: {
       ...context.coeffects,
-      ...coeffect
-    }
-  }
+      ...coeffect,
+    },
+  };
 }
 
 export function injectCoeffects(coeffectId, args) {
@@ -48,16 +48,16 @@ export function injectCoeffects(coeffectId, args) {
     before: context => mergeWithCoeffects(context, {
       pendingCoeffectHandler: {
         coeffectId,
-        args
-      }
-    })
-  }
+        args,
+      },
+    }),
+  };
 }
 
 export function effect(effectId, args) {
   return {
-    after: context => mergeWithEffects(context, { [effectId]: args})
-  }
+    after: context => mergeWithEffects(context, { [effectId]: args }),
+  };
 }
 
 function createDoEffects(effectHandlers, dispatch) {
@@ -66,51 +66,51 @@ function createDoEffects(effectHandlers, dispatch) {
     after: context => {
       Object.keys(context.effects).forEach(effectId => {
         if (effectHandlers[effectId]) effectHandlers[effectId](context.coeffects, context.effects[effectId], dispatch);
-      })
-    }
-  }
+      });
+    },
+  };
 }
 
 const dispatch = {
   id: 'dispatch',
-  after: context => mergeWithEffects(context, { dispatch: null })
+  after: context => mergeWithEffects(context, { dispatch: null }),
 };
 
 const debug = {
   id: 'debug',
-  after: context => mergeWithEffects(context, { debug: context })
-}
+  after: context => mergeWithEffects(context, { debug: context }),
+};
 
 export const interceptors = {
   dispatch,
-  debug
-}
+  debug,
+};
 
 // Is this worth it?
 export function coeffectToAction(args = {}) {
   // TODO: Let this be a deep path
-  return  {
+  return {
     before: context => {
       const { coeffects } = context;
       const { action = {} } = coeffects;
-      const { from, spread = false } = args
+      const { from, spread = false } = args;
       const coeffect = coeffects[from];
       const to = args.to || from;
 
-      const updatedAction = spread ? { ...action, ...coeffect } : { ...action, [to]: coeffect }
+      const updatedAction = spread ? { ...action, ...coeffect } : { ...action, [to]: coeffect };
 
       return mergeWithCoeffects(context, {
-        action: updatedAction
-      })
-    }
-  }
+        action: updatedAction,
+      });
+    },
+  };
 }
 
 export function enqueue(context, interceptors) {
   return {
     ...context,
-    ...{ queue: [...context.queue, ...interceptors] }
-  }
+    ...{ queue: [...context.queue, ...interceptors] },
+  };
 }
 
 function changeDirection(context) {
@@ -127,15 +127,15 @@ function handleInjectedCoeffect(context, coeffectHandlers = {}) {
     // TODO: Handle async coeffectHandlers
     const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context.coeffects, args) : null;
 
-    let updatedCoeffects = {...coeffects, ...{ [coeffectId]: result }};
+    let updatedCoeffects = { ...coeffects, ...{ [coeffectId]: result } };
     updatedCoeffects = removeKey('pendingCoeffectHandler', updatedCoeffects);
 
     const updatedContext = {
       ...context,
       ...{
-        coeffects: updatedCoeffects
-      }
-    }
+        coeffects: updatedCoeffects,
+      },
+    };
 
     return updatedContext;
   }
@@ -155,24 +155,24 @@ function invokeInterceptors(direction, config, context) {
   let updatedContext = {
     ...context,
     ...{ queue: rest },
-    ...{ stack: [interceptor, ...context.stack]}
+    ...{ stack: [interceptor, ...context.stack] },
   };
 
   updatedContext = interceptor[direction] ? interceptor[direction](updatedContext) || updatedContext : updatedContext;
 
   if (updatedContext.coeffects.pendingCoeffectHandler) {
-    updatedContext = handleInjectedCoeffect(updatedContext, config.coeffectHandlers)
+    updatedContext = handleInjectedCoeffect(updatedContext, config.coeffectHandlers);
   }
 
   return invokeInterceptors(direction, config, updatedContext);
 }
 
 export const reduxFrame = (options = {}) => store => next => action => {
-  if(isFrame(action.type)) {
+  if (isFrame(action.type)) {
     // Immediately send this wrapped action along through Redux. Mostly used for debugging
     next(action);
 
-    const { interceptors = [], type } = action;
+    const { interceptors = [] } = action;
     const { effectHandlers = {}, coeffectHandlers = {} } = options;
 
     const config = {
@@ -180,36 +180,35 @@ export const reduxFrame = (options = {}) => store => next => action => {
         ...effectHandlers,
         ...{
           dispatch: (coeffects) => store.dispatch(coeffects.action),
-          debug: (coeffects, context) => console.log(action.type, context)
-        }
+          debug: (coeffects, context) => console.log(action.type, context), /* eslint-disable-line no-console */
+        },
       },
       coeffectHandlers: {
         ...coeffectHandlers,
         ...{
-          state: coeffects => store.getState()
-        }
-      }
-    }
+          state: () => store.getState(),
+        },
+      },
+    };
 
     // Initialize context. This gets threaded through all interceptors.
     const context = {
       coeffects: {
-        action: normalizeFramedAction(action)
+        action: normalizeFramedAction(action),
       },
       effects: {},
       queue: [createDoEffects(config.effectHandlers, store.dispatch), injectCoeffects('state'), ...interceptors],
-      stack: []
-    }
+      stack: [],
+    };
 
     // Need to pass around config so that the coeffectHandlers can be invoked by handleInjectedCoeffect.
     // This is because we only know the coeffect handler map at reduxFrame() config time.
     return [
       invokeInterceptors.bind(null, 'before', config),
       changeDirection,
-      invokeInterceptors.bind(null, 'after', config)
+      invokeInterceptors.bind(null, 'after', config),
     ].reduce((context, fn) => fn(context), context);
   }
 
   next(action);
-  return;
-}
+};
