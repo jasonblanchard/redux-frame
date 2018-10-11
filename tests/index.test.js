@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createStore, applyMiddleware } from 'redux';
 
 import {
@@ -336,5 +337,53 @@ describe('coeffectToAction', () => {
       a: 'a',
       b: 'b',
     });
+  });
+});
+
+it('passes the acion through when it is not framed', () => {
+  const mockStore = {
+    dispatch: () => {},
+    getState: () => ({}),
+  };
+
+  const next = jest.fn();
+
+  const fn = reduxFrame()(mockStore)(next);
+
+  fn({
+    type: 'TEST',
+  });
+
+  expect(next).toBeCalledWith({ type: 'TEST' });
+});
+
+describe('debug', () => {
+  let oldLog = console.log;
+
+  beforeEach(() => {
+    console.log = jest.fn();
+  });
+
+  afterEach(() => {
+    console.log = oldLog;
+  });
+
+  it('calls console.log with debug effect', () => {
+    const mockStore = {
+      dispatch: () => {},
+      getState: () => ({}),
+    };
+
+    const fn = reduxFrame()(mockStore)(() => {});
+
+    fn({
+      type: frame('TEST'),
+      interceptors: [interceptors.debug],
+    });
+
+    expect(console.log).toBeCalled();
+    const args = console.log.mock.calls[0];
+    expect(args[0]).toEqual('@@REDUX_FRAME/TEST');
+    expect(Object.keys(args[1])).toEqual(['coeffects', 'effects', 'queue', 'stack']);
   });
 });
