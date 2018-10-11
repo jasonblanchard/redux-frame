@@ -10,7 +10,7 @@
   },
   "author": "jasonblanchard",
   "license": "ISC",
-  "repository": "github:jasonblanchard/jestbox",
+  "repository": "github:jasonblanchard/redux-frame",
   "devDependencies": {
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
