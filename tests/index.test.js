@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createStore, applyMiddleware } from 'redux';
 
 import {
@@ -354,4 +355,32 @@ it('passes the acion through when it is not framed', () => {
   });
 
   expect(next).toBeCalledWith({ type: 'TEST' });
+});
+
+describe('debug', () => {
+  let oldLog = console.log;
+
+  beforeEach(() => {
+    console.log = jest.fn();
+  });
+
+  afterEach(() => {
+    console.log = oldLog;
+  });
+
+  it('calls console.log with debug effect', () => {
+    const mockStore = {
+      dispatch: () => {},
+      getState: () => ({}),
+    };
+
+    const fn = reduxFrame()(mockStore)(() => {});
+
+    fn({
+      type: frame('TEST'),
+      interceptors: [interceptors.debug],
+    });
+
+    expect(console.log).toBeCalled();
+  });
 });
