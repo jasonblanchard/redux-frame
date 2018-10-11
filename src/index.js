@@ -1,3 +1,5 @@
+const removeKey = (key, {[key]: _, ...rest}) => rest;
+
 export const FRAME_PREFIX = '@@REDUX_FRAME';
 
 export function frame(type) {
@@ -42,9 +44,8 @@ export function mergeWithCoeffects(context, coeffect) {
 
 export function injectCoeffects(coeffectId, args) {
   return {
-    id: 'indjectCoeffects',
-    before: context => ({
-      ...context,
+    id: 'injectCoeffects',
+    before: context => mergeWithCoeffects(context, {
       pendingCoeffectHandler: {
         coeffectId,
         args
@@ -70,15 +71,19 @@ function createDoEffects(effectHandlers, dispatch) {
   }
 }
 
+const dispatch = {
+  id: 'dispatch',
+  after: context => mergeWithEffects(context, { dispatch: null })
+};
+
+const debug = {
+  id: 'debug',
+  after: context => mergeWithEffects(context, { debug: context })
+}
+
 export const interceptors = {
-  dispatch: {
-    id: 'dispatch',
-    after: context => mergeWithEffects(context, { dispatch: null })
-  },
-  debug: {
-    id: 'debug',
-    after: context => mergeWithEffects(context, { debug: context })
-  }
+  dispatch,
+  debug
 }
 
 export function enqueue(context, interceptors) {
@@ -89,21 +94,36 @@ export function enqueue(context, interceptors) {
 }
 
 function changeDirection(context) {
-  return enqueue(context, context.stack);
+  return enqueue({ ...context, ...{ queue: [] } }, context.stack);
 }
 
-function handleInjectedCoeffect(coeffectHandlers = {}, coeffectId, args) {
-  return {
-    id: 'handleInjectedCoeffect',
-    before: context => {
-      const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context.coeffects, args) : null;
-      return mergeWithCoeffects(context, { [coeffectId]: result });
+function handleInjectedCoeffect(context, coeffectHandlers = {}) {
+  let { coeffects } = context;
+  const { pendingCoeffectHandler = {} } = coeffects;
+  const { coeffectId, args } = pendingCoeffectHandler;
+
+  if (coeffectId) {
+    // TODO: Handle async coeffectHandlers
+    const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context.coeffects, args) : null;
+
+    let updatedCoeffects = {...coeffects, ...{ [coeffectId]: result }};
+    updatedCoeffects = removeKey('pendingCoeffectHandler', updatedCoeffects);
+
+    const updatedContext = {
+      ...context,
+      ...{
+        coeffects: updatedCoeffects
+      }
     }
+
+    return updatedContext;
   }
+
+  return context;
 }
 
 // Putting context as last argument so we can partially apply the first two args with `bind`. Thanks, Javascript.
-function invokeInterceptors(direction, coeffectHandlers, context, ) {
+function invokeInterceptors(direction, coeffectHandlers, context) {
   const { queue } = context;
   if (queue.length === 0) {
     return context;
@@ -119,10 +139,8 @@ function invokeInterceptors(direction, coeffectHandlers, context, ) {
 
   updatedContext = interceptor[direction] ? interceptor[direction](updatedContext) || updatedContext : updatedContext;
 
-  if (updatedContext.pendingCoeffectHandler) {
-    const { coeffectId, args } = updatedContext.pendingCoeffectHandler;
-    updatedContext = enqueue(updatedContext, [handleInjectedCoeffect(coeffectHandlers, coeffectId, args)]);
-    delete updatedContext.pendingCoeffectHandler;
+  if (updatedContext.coeffects.pendingCoeffectHandler) {
+    updatedContext = handleInjectedCoeffect(updatedContext, coeffectHandlers)
   }
 
   return invokeInterceptors(direction, coeffectHandlers, updatedContext);
@@ -155,7 +173,7 @@ export const reduxFrame = (options = {}) => store => next => action => {
 
     // Need to pass around coeffectHandlers so that they can be invoked by handleInjectedCoeffect.
     // This is because we only know the coeffect handler map at reduxFrame() config time.
-    // TODO: Consider a registration process at stores these in module scope so that they can be invoked directly by the caller. Same for effect handlers?
+    // TODO: Change this to pass around the config, not just the coeffectHandlers.
     return [
       invokeInterceptors.bind(null, 'before', coeffectHandlers),
       changeDirection,

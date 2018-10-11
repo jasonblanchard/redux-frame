@@ -9,7 +9,7 @@ import {
   interceptors,
   mergeWithCoeffects,
   mergeWithEffects,
-  reduxFrame,
+  reduxFrame
 } from '../src';
 
 it('frame', () => {
@@ -19,9 +19,11 @@ it('frame', () => {
 it('injectCoeffects', () => {
   const interceptor = injectCoeffects('coeffectTester', {arg1: 'arg1Value'});
   expect(interceptor.before({})).toEqual({
-    pendingCoeffectHandler: {
-      coeffectId: 'coeffectTester',
-      args: {arg1: 'arg1Value'}
+    coeffects: {
+      pendingCoeffectHandler: {
+        coeffectId: 'coeffectTester',
+        args: {arg1: 'arg1Value'}
+      }
     }
   });
 });
@@ -155,6 +157,28 @@ it('calls registered coeffect handlers', () => {
   });
 
   expect(contextMap.coeffects.testCoeffect).toEqual('tested arg1 arg2');
+});
+
+it('calls registered coeffect handlers when there are multiple', () => {
+  const mockStore = {
+    dispatch: () => {},
+    getState: () => ({})
+  }
+
+  const fn = reduxFrame({
+    coeffectHandlers: {
+      testCoeffect: () => 'first coeffect',
+      anotherCoeffect: () => 'another coeffect'
+    }
+  })(mockStore)(() => {});
+
+  const contextMap = fn({
+    type: frame('TEST'),
+    interceptors: [injectCoeffects('testCoeffect'), injectCoeffects('anotherCoeffect')]
+  });
+
+  expect(contextMap.coeffects.testCoeffect).toEqual('first coeffect');
+  expect(contextMap.coeffects.anotherCoeffect).toEqual('another coeffect');
 });
 
 it('calls registered effect handlers', () => {
