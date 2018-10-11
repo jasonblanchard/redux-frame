@@ -1,6 +1,6 @@
 {
   "name": "redux-frame",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Yet another side-effect management library for Redux",
   "main": "lib/index.js",
   "scripts": {
