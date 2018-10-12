@@ -77,7 +77,7 @@ function mapDispatchToProps(dispatch) {
 ```
 
 ### API docs
-Right [over here](docs/api).
+Right [over here](docs/api.md).
 
 ## Key concepts
 ### Interceptors
