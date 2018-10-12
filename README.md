@@ -1,5 +1,7 @@
 # redux-frame
-Side-effect management library for Redux influenced by [re-frame](https://github.com/Day8/re-frame).
+Side-effect management library for Redux inspired by [re-frame](https://github.com/Day8/re-frame).
+
+> NOTE: This is very new and very experimental. It is not stable and the API is almost certainly change. ☠️ BEWARE ☠️
 
 [![CircleCI](https://circleci.com/gh/jasonblanchard/redux-frame.svg?style=svg)](https://circleci.com/gh/jasonblanchard/redux-frame)
 
