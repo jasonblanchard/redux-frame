@@ -17,6 +17,7 @@ export default {
 
 export function effect(effectId, args) {
   return {
+    id: effectId,
     after: context => mergeWithEffects(context, { [effectId]: args }),
   };
 }
@@ -33,18 +34,17 @@ export function injectCoeffects(coeffectId, args) {
   };
 }
 
-// Is this worth it?
 export function coeffectToAction(args = {}) {
   // TODO: Let this be a deep path
   return {
     before: context => {
       const { coeffects } = context;
       const { action = {} } = coeffects;
-      const { from, spread = false } = args;
+      const { from } = args;
       const coeffect = coeffects[from];
       const to = args.to || from;
 
-      const updatedAction = spread ? { ...action, ...coeffect } : { ...action, [to]: coeffect };
+      const updatedAction = { ...action, [to]: coeffect };
 
       return mergeWithCoeffects(context, {
         action: updatedAction,

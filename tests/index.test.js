@@ -317,27 +317,6 @@ describe('coeffectToAction', () => {
       test: 'test',
     });
   });
-
-  it('spread: true', () => {
-    const context = {
-      coeffects: {
-        someCoeffect: {
-          a: 'a',
-          b: 'b',
-        },
-        action: {
-          type: 'TEST',
-        },
-      },
-    };
-
-    const result = coeffectToAction({ from: 'someCoeffect', spread: true }).before(context);
-    expect(result.coeffects.action).toEqual({
-      type: 'TEST',
-      a: 'a',
-      b: 'b',
-    });
-  });
 });
 
 it('passes the acion through when it is not framed', () => {

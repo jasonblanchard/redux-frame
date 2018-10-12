@@ -85,26 +85,21 @@ export default (options = {}) => store => next => action => {
     const config = {
       effectHandlers: {
         ...effectHandlers,
-        ...{
-          dispatch: (coeffects) => store.dispatch(coeffects.action),
-          debug: (coeffects, context) => console.log(action.type, context), /* eslint-disable-line no-console */
-        },
+        dispatch: (coeffects, args, dispatch) => dispatch(coeffects.action),
+        debug: (coeffects, context) => console.log(action.type, context), /* eslint-disable-line no-console */
       },
       coeffectHandlers: {
         ...coeffectHandlers,
-        ...{
-          state: () => store.getState(),
-        },
+        state: () => store.getState(),
+        action: () => normalizeFramedAction(action),
       },
     };
 
     // Initialize context. This gets threaded through all interceptors.
     const context = {
-      coeffects: {
-        action: normalizeFramedAction(action),
-      },
+      coeffects: {},
       effects: {},
-      queue: [doEffects(config.effectHandlers, store.dispatch), injectCoeffects('state'), ...interceptors],
+      queue: [doEffects(config.effectHandlers, store.dispatch), injectCoeffects('state'), injectCoeffects('action'), ...interceptors],
       stack: [],
     };
 
