@@ -94,8 +94,10 @@ Useful if you want to tack on the result from a previous coeffect handler on to 
 | Param | Type | Description |
 | --- | --- | --- |
 | args | <code>Object</code> | key/value argument pairs. |
-| args.from | <code>string</code> | path in coeffects that you want merged into the action. |
-| args.to | <code>string</code> | path in the action where you want the result merged into. |
+| args.from | <code>string</code> | path in coeffects that you want merged into the action. Can express a deep path with dot-separated path string. |
+| args.from | <code>Array.&lt;string&gt;</code> | path in coeffects that you want merged into the action. Can express a deep path with array of keys. |
+| args.to | <code>string</code> | path in the action where you want the result merged into. Can express a deep path with dot-separated path string. |
+| args.to | <code>Array.&lt;string&gt;</code> | path in the action where you want the result merged into.Can express a deep path with array of keys. |
 
 <a name="reFrame"></a>
 

@@ -284,7 +284,7 @@ describe('integration with Redux', () => {
 });
 
 describe('coeffectToAction', () => {
-  it('uses from key as to key', () => {
+  it('uses from key as to key if no `to` is provided', () => {
     const context = {
       coeffects: {
         someCoeffect: 'test',
@@ -315,6 +315,48 @@ describe('coeffectToAction', () => {
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
       test: 'test',
+    });
+  });
+
+  it('can handle a nested to and from path with dotted string', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: {
+          someNestedValue: 'test',
+        },
+        action: {
+          type: 'TEST',
+        },
+      },
+    };
+
+    const result = coeffectToAction({ from: 'someCoeffect.someNestedValue', to: 'test.nestedKey' }).before(context);
+    expect(result.coeffects.action).toEqual({
+      type: 'TEST',
+      test: {
+        nestedKey: 'test',
+      },
+    });
+  });
+
+  it('can handle a nested to and from path with array', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: {
+          someNestedValue: 'test',
+        },
+        action: {
+          type: 'TEST',
+        },
+      },
+    };
+
+    const result = coeffectToAction({ from: ['someCoeffect', 'someNestedValue'], to: ['test', 'nestedKey'] }).before(context);
+    expect(result.coeffects.action).toEqual({
+      type: 'TEST',
+      test: {
+        nestedKey: 'test',
+      },
     });
   });
 });
