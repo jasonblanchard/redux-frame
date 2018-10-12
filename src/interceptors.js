@@ -1,3 +1,6 @@
+import objectPath from 'object-path';
+import immutableObjectPath from 'object-path-immutable';
+
 import { mergeWithEffects, mergeWithCoeffects } from './utils';
 
 /**
@@ -54,8 +57,10 @@ export function injectCoeffects(coeffectId, args) {
  * Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects.action[to].
  * Useful if you want to tack on the result from a previous coeffect handler on to the action before dispatching it so that you can access that data in your reducers.
  * @param {Object} args - key/value argument pairs.
- * @param {string} args.from - path in coeffects that you want merged into the action.
- * @param {string} args.to - path in the action where you want the result merged into.
+ * @param {(string)} args.from - path in coeffects that you want merged into the action. Can express a deep path with dot-separated path string.
+ * @param {(string[])} args.from - path in coeffects that you want merged into the action. Can express a deep path with array of keys.
+ * @param {string} args.to - path in the action where you want the result merged into. Can express a deep path with dot-separated path string.
+ * @param {string[]} args.to - path in the action where you want the result merged into.Can express a deep path with array of keys.
 */
 export function coeffectToAction(args = {}) {
   // TODO: Let this be a deep path
@@ -64,10 +69,10 @@ export function coeffectToAction(args = {}) {
       const { coeffects } = context;
       const { action = {} } = coeffects;
       const { from } = args;
-      const coeffect = coeffects[from];
+      const coeffect = objectPath.get(coeffects, from);
       const to = args.to || from;
 
-      const updatedAction = { ...action, [to]: coeffect };
+      const updatedAction = immutableObjectPath.set(action, to, coeffect);
 
       return mergeWithCoeffects(context, {
         action: updatedAction,
