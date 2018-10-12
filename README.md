@@ -76,6 +76,9 @@ function mapDispatchToProps(dispatch) {
 }
 ```
 
+### API docs
+Right [over here](docs/api).
+
 ## Key concepts
 ### Interceptors
 The interceptor chain is kind of like middleware functions that you see in [Redux](https://redux.js.org/advanced/middleware) and [Express](https://expressjs.com/en/guide/using-middleware.html) - you inject behavior with middleware functions that can do special stuff and then invoke some kind of `next()` function that represents the next link in the chain.

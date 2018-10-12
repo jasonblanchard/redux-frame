@@ -8,7 +8,8 @@
     "build": "babel src -d lib",
     "lint": "eslint src/ tests/",
     "coverage": "npm run test -- --coverage",
-    "coveralls": "npm run coverage -- --coverageReporters=text-lcov | coveralls"
+    "coveralls": "npm run coverage -- --coverageReporters=text-lcov | coveralls",
+    "doc": "jsdoc2md -f src/*.js > docs/api.md"
   },
   "author": "jasonblanchard",
   "license": "ISC",
@@ -30,6 +31,7 @@
     "eslint-plugin-react": "^7.11.1",
     "eslint-plugin-standard": "^4.0.0",
     "jest": "^23.6.0",
+    "jsdoc-to-markdown": "^4.0.1",
     "redux": "^4.0.0"
   },
   "dependencies": {},

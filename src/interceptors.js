@@ -1,10 +1,16 @@
 import { mergeWithEffects, mergeWithCoeffects } from './utils';
 
+/**
+ * Interceptor that dispatches the action stored in context.coeffects.action.
+*/
 const dispatch = {
   id: 'dispatch',
   after: context => mergeWithEffects(context, { dispatch: null }),
 };
 
+/**
+ * Interceptor that logs the context with console.log().
+*/
 const debug = {
   id: 'debug',
   after: context => mergeWithEffects(context, { debug: context }),
@@ -15,6 +21,11 @@ export default {
   debug,
 };
 
+/**
+ * Interceptor factory that creates an interceptor that merges the effectId and args into context.effects.
+ * @param {string} - effectId
+ * @param {object} - key value pair arguments
+*/
 export function effect(effectId, args) {
   return {
     id: effectId,
@@ -22,6 +33,11 @@ export function effect(effectId, args) {
   };
 }
 
+/**
+ * Interceptor factory that creates an interceptor that merges the result of the coeffect handler named coeffectId into context.coeffects under the coeffectId key.
+ * @param {string} - coeffectId
+ * @param {object} - key value pair arguments
+*/
 export function injectCoeffects(coeffectId, args) {
   return {
     id: 'injectCoeffects',
@@ -34,6 +50,13 @@ export function injectCoeffects(coeffectId, args) {
   };
 }
 
+/**
+ * Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects.action[to].
+ * Useful if you want to tack on the result from a previous coeffect handler on to the action before dispatching it so that you can access that data in your reducers.
+ * @param {Object} args - key/value argument pairs.
+ * @param {string} args.from - path in coeffects that you want merged into the action.
+ * @param {string} args.to - path in the action where you want the result merged into.
+*/
 export function coeffectToAction(args = {}) {
   // TODO: Let this be a deep path
   return {

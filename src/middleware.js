@@ -2,7 +2,7 @@ import { enqueue } from './utils';
 import { FRAME_PREFIX } from './constants';
 import { injectCoeffects, doEffects } from './interceptors';
 
-export const removeKey = (key, { [key]: _, ...rest }) => rest; /* eslint-disable-line no-unused-vars */
+const removeKey = (key, { [key]: _, ...rest }) => rest; /* eslint-disable-line no-unused-vars */
 
 function stripFrame(type) {
   const re = new RegExp('^' + FRAME_PREFIX + '/');
@@ -74,7 +74,13 @@ function changeDirection(context) {
   return updatedContext;
 }
 
-export default (options = {}) => store => next => action => {
+/**
+ * Redux middlware that invokes the interceptor chain when the action.type is preffixed by FRAME_PREFIX. Add this to Redux with `applyMiddleware()`
+ * @param {Object} options - key/value pairs of effectIds and effect handler functions.
+ * @param {Object} options.effectHandlers - key/value pairs of effectIds and effect handler functions.
+ * @param {Object} options.coeffectHandlers - key/value pairs of coeffectIds and coeffect handler functions.
+*/
+const reFrame = (options = {}) => store => next => action => {
   if (isFrame(action.type)) {
     // Immediately send this wrapped action along through Redux. Mostly used for debugging
     next(action);
@@ -114,3 +120,5 @@ export default (options = {}) => store => next => action => {
 
   next(action);
 };
+
+export default reFrame;
