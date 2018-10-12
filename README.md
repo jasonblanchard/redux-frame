@@ -10,7 +10,7 @@ Side-effect management library for Redux inspired by [re-frame](https://github.c
 ## What's this all about?
 The purpose of this library is to give you, the application developer, the tools you need to compose a Redux implementation out of smaller, purer, more reusable pieces that isolate side effects and interaction with the outside world.
 
-This library is heavily influence by [re-frame](https://github.com/Day8/re-frame). At this point, you should head over there and read the [overview](https://github.com/Day8/re-frame#derived-values-flowing) and docs on [interceptors](https://github.com/Day8/re-frame/blob/master/docs/Interceptors.md), [effects](https://github.com/Day8/re-frame/blob/master/docs/Effects.md) and [coeffects](https://github.com/Day8/re-frame/blob/master/docs/Coeffects.md). Go ahead, I'll wait.
+This library is heavily influenced by [re-frame](https://github.com/Day8/re-frame). At this point, you should head over there and read the [overview](https://github.com/Day8/re-frame#derived-values-flowing) and docs on [interceptors](https://github.com/Day8/re-frame/blob/master/docs/Interceptors.md), [effects](https://github.com/Day8/re-frame/blob/master/docs/Effects.md) and [coeffects](https://github.com/Day8/re-frame/blob/master/docs/Coeffects.md). Go ahead, I'll wait.
 
 Ok ready? That's a quality README, isn't it? I apologize for all the parentheses.
 
