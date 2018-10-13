@@ -46,7 +46,7 @@ function handleInjectedCoeffect(context, coeffectHandlers = {}) {
 }
 
 // Putting context as last argument so we can partially apply the first two args with `bind`. Thanks, Javascript.
-function invokeInterceptors(direction, config, context) {
+function invokeInterceptors(direction, context) {
   const { queue } = context;
   if (queue.length === 0) {
     return context;
@@ -63,10 +63,10 @@ function invokeInterceptors(direction, config, context) {
   updatedContext = interceptor[direction] ? interceptor[direction](updatedContext) || updatedContext : updatedContext;
 
   if (updatedContext.coeffects.pendingCoeffectHandler) {
-    updatedContext = handleInjectedCoeffect(updatedContext, config.coeffectHandlers);
+    updatedContext = handleInjectedCoeffect(updatedContext, context.config.coeffectHandlers);
   }
 
-  return invokeInterceptors(direction, config, updatedContext);
+  return invokeInterceptors(direction, updatedContext);
 }
 
 function changeDirection(context) {
@@ -79,6 +79,7 @@ function changeDirection(context) {
  * @param {Object} options - key/value pairs of effectIds and effect handler functions.
  * @param {Object} options.effectHandlers - key/value pairs of effectIds and effect handler functions.
  * @param {Object} options.coeffectHandlers - key/value pairs of coeffectIds and coeffect handler functions.
+ * @param {Object} options.globalInterceptors - Array of interceptors. These will run AFTER the built-in interceptors and BEFORE action.interceptors.
 */
 const reFrame = (options = {}) => store => next => action => {
   if (isFrame(action.type)) {
@@ -86,7 +87,7 @@ const reFrame = (options = {}) => store => next => action => {
     next(action);
 
     const { interceptors = [] } = action;
-    const { effectHandlers = {}, coeffectHandlers = {} } = options;
+    const { effectHandlers = {}, coeffectHandlers = {}, globalInterceptors = [] } = options;
 
     const config = {
       effectHandlers: {
@@ -99,22 +100,22 @@ const reFrame = (options = {}) => store => next => action => {
         state: () => store.getState(),
         action: () => normalizeFramedAction(action),
       },
+      globalInterceptors,
     };
 
     // Initialize context. This gets threaded through all interceptors.
     const context = {
       coeffects: {},
       effects: {},
-      queue: [doEffects(config.effectHandlers, store.dispatch), injectCoeffects('state'), injectCoeffects('action'), ...interceptors],
+      queue: [doEffects(store.dispatch), injectCoeffects('state'), injectCoeffects('action'), ...globalInterceptors, ...interceptors],
       stack: [],
+      config,
     };
 
-    // Need to pass around config so that the coeffectHandlers can be invoked by handleInjectedCoeffect.
-    // This is because we only know the coeffect handler map at reduxFrame() config time.
     return [
-      invokeInterceptors.bind(null, 'before', config),
+      invokeInterceptors.bind(null, 'before'),
       changeDirection,
-      invokeInterceptors.bind(null, 'after', config),
+      invokeInterceptors.bind(null, 'after'),
     ].reduce((context, fn) => fn(context), context);
   }
 
