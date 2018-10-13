@@ -405,6 +405,54 @@ describe('debug', () => {
     expect(console.log).toBeCalled();
     const args = console.log.mock.calls[0];
     expect(args[0]).toEqual('@@REDUX_FRAME/TEST');
-    expect(Object.keys(args[1])).toEqual(['coeffects', 'effects', 'queue', 'stack']);
+    expect(Object.keys(args[1])).toEqual(['coeffects', 'effects', 'queue', 'stack', 'config']);
   });
+});
+
+it('can be configured with global interceptors that run on every action', () => {
+  const mockStore = {
+    dispatch: () => {},
+    getState: () => ({}),
+  };
+
+  const addTest = {
+    before: context => mergeWithCoeffects(context, { test: 'tested' }),
+  };
+
+  const fn = reduxFrame({
+    globalInterceptors: [addTest],
+  })(mockStore)(() => {});
+
+  const contextMap = fn({
+    type: frame('TEST'),
+    interceptors: [],
+  });
+
+  expect(contextMap.coeffects.test).toEqual('tested');
+});
+
+it('a global interceptor can add more interceptors', () => {
+  const mockStore = {
+    dispatch: () => {},
+    getState: () => ({}),
+  };
+
+  const addTest = {
+    before: context => mergeWithCoeffects(context, { test: 'tested' }),
+  };
+
+  const modifyConfig = {
+    before: context => enqueue(context, [addTest]),
+  };
+
+  const fn = reduxFrame({
+    globalInterceptors: [],
+  })(mockStore)(() => {});
+
+  const contextMap = fn({
+    type: frame('TEST'),
+    interceptors: [modifyConfig],
+  });
+
+  expect(contextMap.coeffects.test).toEqual('tested');
 });

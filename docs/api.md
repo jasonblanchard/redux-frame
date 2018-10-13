@@ -111,6 +111,7 @@ Redux middlware that invokes the interceptor chain when the action.type is preff
 | options | <code>Object</code> | key/value pairs of effectIds and effect handler functions. |
 | options.effectHandlers | <code>Object</code> | key/value pairs of effectIds and effect handler functions. |
 | options.coeffectHandlers | <code>Object</code> | key/value pairs of coeffectIds and coeffect handler functions. |
+| options.globalInterceptors | <code>Object</code> | Array of interceptors. These will run AFTER the built-in interceptors and BEFORE action.interceptors. |
 
 <a name="mergeWithEffects"></a>
 

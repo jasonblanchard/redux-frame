@@ -81,10 +81,11 @@ export function coeffectToAction(args = {}) {
   };
 }
 
-export function doEffects(effectHandlers, dispatch) {
+export function doEffects(dispatch) {
   return {
     id: 'doEffects',
     after: context => {
+      const { effectHandlers } = context.config;
       Object.keys(context.effects).forEach(effectId => {
         if (effectHandlers[effectId]) effectHandlers[effectId](context.coeffects, context.effects[effectId], dispatch);
       });

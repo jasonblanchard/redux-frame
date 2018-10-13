@@ -118,6 +118,7 @@ As it does this, it threads a `context` map through each `before()` and `after()
 - `effects` - these are special key value pairs where the key maps to an `effectHandler` which later gets invoked with the value as `args`.
 - `queue` - list of interceptors whose `before` functions have yet to be run.
 - `stack` - list of interceptors already walked whose `after` functions may need to be run.
+- `config` - Options object that was passed to `reduxFrame` middleware.
 
 Interceptor functions should _always_ return a new context map and should _always_ be pure functions.
 
