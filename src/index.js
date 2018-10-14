@@ -2,7 +2,7 @@ export {
   default as interceptors,
   effect,
   injectCoeffects,
-  coeffectToAction,
+  path,
 } from './interceptors';
 
 export {

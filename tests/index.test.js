@@ -2,7 +2,6 @@
 import { createStore, applyMiddleware } from 'redux';
 
 import {
-  coeffectToAction,
   effect,
   enqueue,
   FRAME_PREFIX,
@@ -11,6 +10,7 @@ import {
   interceptors,
   mergeWithCoeffects,
   mergeWithEffects,
+  path,
   reduxFrame,
 } from '../src';
 
@@ -283,8 +283,8 @@ describe('integration with Redux', () => {
   });
 });
 
-describe('coeffectToAction', () => {
-  it('uses from key as to key if no `to` is provided', () => {
+describe('path', () => {
+  it('moves value at `from` to `path`', () => {
     const context = {
       coeffects: {
         someCoeffect: 'test',
@@ -294,24 +294,7 @@ describe('coeffectToAction', () => {
       },
     };
 
-    const result = coeffectToAction({ from: 'someCoeffect' }).before(context);
-    expect(result.coeffects.action).toEqual({
-      type: 'TEST',
-      someCoeffect: 'test',
-    });
-  });
-
-  it('uses to key', () => {
-    const context = {
-      coeffects: {
-        someCoeffect: 'test',
-        action: {
-          type: 'TEST',
-        },
-      },
-    };
-
-    const result = coeffectToAction({ from: 'someCoeffect', to: 'test' }).before(context);
+    const result = path({ from: 'someCoeffect', to: 'action.test' }).before(context);
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
       test: 'test',
@@ -330,7 +313,7 @@ describe('coeffectToAction', () => {
       },
     };
 
-    const result = coeffectToAction({ from: 'someCoeffect.someNestedValue', to: 'test.nestedKey' }).before(context);
+    const result = path({ from: 'someCoeffect.someNestedValue', to: 'action.test.nestedKey' }).before(context);
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
       test: {
@@ -351,11 +334,50 @@ describe('coeffectToAction', () => {
       },
     };
 
-    const result = coeffectToAction({ from: ['someCoeffect', 'someNestedValue'], to: ['test', 'nestedKey'] }).before(context);
+    const result = path({ from: ['someCoeffect', 'someNestedValue'], to: ['action', 'test', 'nestedKey'] }).before(context);
     expect(result.coeffects.action).toEqual({
       type: 'TEST',
       test: {
         nestedKey: 'test',
+      },
+    });
+  });
+
+  it('moves undefined to the `to` source if no `from` is provided', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: 'test',
+        action: {
+          type: 'TEST',
+        },
+      },
+    };
+
+    const result = path({ to: 'output' }).before(context);
+    expect(result.coeffects).toEqual({
+      someCoeffect: 'test',
+      action: {
+        type: 'TEST',
+      },
+      output: undefined,
+    });
+  });
+
+  it('does nothing if the `to` source is not provided', () => {
+    const context = {
+      coeffects: {
+        someCoeffect: 'test',
+        action: {
+          type: 'TEST',
+        },
+      },
+    };
+
+    const result = path({ from: 'someCoeffect' }).before(context);
+    expect(result.coeffects).toEqual({
+      someCoeffect: 'test',
+      action: {
+        type: 'TEST',
       },
     });
   });
