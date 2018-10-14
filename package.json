@@ -30,6 +30,7 @@
     "doc": "lerna run doc",
     "lerna": "lerna",
     "lint": "eslint packages/**/src",
+    "publish": "lerna run build && lerna publish",
     "test": "jest --env node --config .jestrc.json"
   }
 }
