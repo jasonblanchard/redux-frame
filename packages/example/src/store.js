@@ -1,28 +1,28 @@
-import { createStore, applyMiddleware, compose } from 'redux'
+import { createStore, applyMiddleware, compose } from 'redux';
 
-import { reduxFrame } from './redux-frame';
+import { reduxFrame } from 'redux-frame';
 import coeffectHandlers from './coeffects';
 import effectHandlers from './effects';
 
-function reducer(state = {stuff: []}, action) {
+function reducer(state = { stuff: [] }, action) {
   switch (action.type) {
   case 'ADD_STUFF':
     return {
       stuff: [
         action.thing,
-        ...state.stuff
-      ]
-    }
+        ...state.stuff,
+      ],
+    };
   case 'INITIALIZE':
     return {
-      stuff: action.stuff || []
+      stuff: action.stuff || [],
     };
   case 'CLEAR_STUFF':
     return {
-      stuff: []
-    }
+      stuff: [],
+    };
   default:
-    return state
+    return state;
   }
 }
 
@@ -33,7 +33,7 @@ export default createStore(
   composeEnhancers(
     applyMiddleware(reduxFrame({
       coeffectHandlers,
-      effectHandlers
+      effectHandlers,
     }))
   )
-)
+);
