@@ -295,9 +295,12 @@ describe('path', () => {
     };
 
     const result = path({ from: 'someCoeffect', to: 'action.test' }).before(context);
-    expect(result.coeffects.action).toEqual({
-      type: 'TEST',
-      test: 'test',
+    expect(result.coeffects).toEqual({
+      someCoeffect: 'test',
+      action: {
+        type: 'TEST',
+        test: 'test',
+      },
     });
   });
 
@@ -314,10 +317,15 @@ describe('path', () => {
     };
 
     const result = path({ from: 'someCoeffect.someNestedValue', to: 'action.test.nestedKey' }).before(context);
-    expect(result.coeffects.action).toEqual({
-      type: 'TEST',
-      test: {
-        nestedKey: 'test',
+    expect(result.coeffects).toEqual({
+      someCoeffect: {
+        someNestedValue: 'test',
+      },
+      action: {
+        type: 'TEST',
+        test: {
+          nestedKey: 'test',
+        },
       },
     });
   });
@@ -335,10 +343,15 @@ describe('path', () => {
     };
 
     const result = path({ from: ['someCoeffect', 'someNestedValue'], to: ['action', 'test', 'nestedKey'] }).before(context);
-    expect(result.coeffects.action).toEqual({
-      type: 'TEST',
-      test: {
-        nestedKey: 'test',
+    expect(result.coeffects).toEqual({
+      someCoeffect: {
+        someNestedValue: 'test',
+      },
+      action: {
+        type: 'TEST',
+        test: {
+          nestedKey: 'test',
+        },
       },
     });
   });

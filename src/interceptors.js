@@ -67,8 +67,8 @@ export function path(args = {}) {
   return {
     before: context => {
       const { coeffects } = context;
-      const { from = '_', to } = args;
-      const coeffect = objectPath.get(coeffects, from);
+      const { from, to } = args;
+      const coeffect = from ? objectPath.get(coeffects, from) : undefined;
 
       return to ? mergeWithCoeffects(context, (immutableObjectPath.set(coeffects, to, coeffect))) : context;
     },
