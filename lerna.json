@@ -3,7 +3,7 @@
     "publish": {
       "ignoreChanges": [
         "example/**",
-        "**/tests/**"
+        "**/tests/**",
         "*.md"
       ]
     },
