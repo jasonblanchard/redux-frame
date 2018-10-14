@@ -1,6 +1,6 @@
 {
   "name": "example",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "dependencies": {
     "prop-types": "^15.6.2",
@@ -9,7 +9,7 @@
     "react-redux": "^5.0.7",
     "react-scripts": "2.0.4",
     "redux": "^4.0.0",
-    "redux-frame": "^0.0.8"
+    "redux-frame": "^0.0.9"
   },
   "scripts": {
     "start": "react-scripts start",
