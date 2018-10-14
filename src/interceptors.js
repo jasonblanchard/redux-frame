@@ -54,29 +54,23 @@ export function injectCoeffects(coeffectId, args) {
 }
 
 /**
- * Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects.action[to].
+ * Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects[to].
  * Useful if you want to tack on the result from a previous coeffect handler on to the action before dispatching it so that you can access that data in your reducers.
  * @param {Object} args - key/value argument pairs.
- * @param {(string)} args.from - path in coeffects that you want merged into the action. Can express a deep path with dot-separated path string.
- * @param {(string[])} args.from - path in coeffects that you want merged into the action. Can express a deep path with array of keys.
- * @param {string} args.to - path in the action where you want the result merged into. Can express a deep path with dot-separated path string.
- * @param {string[]} args.to - path in the action where you want the result merged into.Can express a deep path with array of keys.
+ * @param {(string)} args.from - source path you want to merge elsewhere. Can express a deep path with dot-separated path string.
+ * @param {(string[])} args.from - source path you want to merge elsewhere. Can express a deep path with array of keys.
+ * @param {string} args.to - destination path. Can express a deep path with dot-separated path string.
+ * @param {string[]} args.to - destination path.Can express a deep path with array of keys.
 */
-export function coeffectToAction(args = {}) {
+export function path(args = {}) {
   // TODO: Let this be a deep path
   return {
     before: context => {
       const { coeffects } = context;
-      const { action = {} } = coeffects;
-      const { from } = args;
-      const coeffect = objectPath.get(coeffects, from);
-      const to = args.to || from;
+      const { from, to } = args;
+      const coeffect = from ? objectPath.get(coeffects, from) : undefined;
 
-      const updatedAction = immutableObjectPath.set(action, to, coeffect);
-
-      return mergeWithCoeffects(context, {
-        action: updatedAction,
-      });
+      return to ? mergeWithCoeffects(context, (immutableObjectPath.set(coeffects, to, coeffect))) : context;
     },
   };
 }

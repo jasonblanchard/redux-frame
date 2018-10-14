@@ -21,8 +21,8 @@
 <dt><a href="#injectCoeffects">injectCoeffects(coeffectId, args)</a></dt>
 <dd><p>Interceptor factory that creates an interceptor that merges the result of the coeffect handler named coeffectId into context.coeffects under the coeffectId key.</p>
 </dd>
-<dt><a href="#coeffectToAction">coeffectToAction(args)</a></dt>
-<dd><p>Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects.action[to].
+<dt><a href="#path">path(args)</a></dt>
+<dd><p>Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects[to].
 Useful if you want to tack on the result from a previous coeffect handler on to the action before dispatching it so that you can access that data in your reducers.</p>
 </dd>
 <dt><a href="#reFrame">reFrame(options)</a></dt>
@@ -83,10 +83,10 @@ Interceptor factory that creates an interceptor that merges the result of the co
 | coeffectId | <code>string</code> | coeffectId |
 | args | <code>object</code> | key value pair arguments |
 
-<a name="coeffectToAction"></a>
+<a name="path"></a>
 
-## coeffectToAction(args)
-Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects.action[to].
+## path(args)
+Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects[to].
 Useful if you want to tack on the result from a previous coeffect handler on to the action before dispatching it so that you can access that data in your reducers.
 
 **Kind**: global function  
@@ -94,10 +94,10 @@ Useful if you want to tack on the result from a previous coeffect handler on to 
 | Param | Type | Description |
 | --- | --- | --- |
 | args | <code>Object</code> | key/value argument pairs. |
-| args.from | <code>string</code> | path in coeffects that you want merged into the action. Can express a deep path with dot-separated path string. |
-| args.from | <code>Array.&lt;string&gt;</code> | path in coeffects that you want merged into the action. Can express a deep path with array of keys. |
-| args.to | <code>string</code> | path in the action where you want the result merged into. Can express a deep path with dot-separated path string. |
-| args.to | <code>Array.&lt;string&gt;</code> | path in the action where you want the result merged into.Can express a deep path with array of keys. |
+| args.from | <code>string</code> | source path you want to merge elsewhere. Can express a deep path with dot-separated path string. |
+| args.from | <code>Array.&lt;string&gt;</code> | source path you want to merge elsewhere. Can express a deep path with array of keys. |
+| args.to | <code>string</code> | destination path. Can express a deep path with dot-separated path string. |
+| args.to | <code>Array.&lt;string&gt;</code> | destination path.Can express a deep path with array of keys. |
 
 <a name="reFrame"></a>
 
