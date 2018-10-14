@@ -23,6 +23,7 @@
     "redux": "^4.0.1"
   },
   "scripts": {
+    "bootstrap": "lerna bootstrap",
     "build:all": "lerna run build",
     "coverage": "npm run test -- --coverage",
     "coveralls": "npm run coverage -- --coverageReporters=text-lcov | coveralls",
