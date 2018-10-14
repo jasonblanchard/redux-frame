@@ -6,7 +6,8 @@ module.exports = {
   },
   "extends": [
     "eslint:recommended",
-    "semistandard"
+    "semistandard",
+    "standard-react"
   ],
   "parser": "babel-eslint",
   "parserOptions": {

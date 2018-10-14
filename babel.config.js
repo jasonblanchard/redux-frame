@@ -4,5 +4,5 @@ module.exports = {
   ],
   plugins: [
   ],
-  comments: false
+  comments: false,
 };

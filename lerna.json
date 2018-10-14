@@ -1,0 +1,16 @@
+{
+  "command": {
+    "publish": {
+      "ignoreChanges": [
+        "example/**",
+        "**/tests/**",
+        "*.md"
+      ]
+    },
+    "bootstrap": {
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  },
+  "packages": ["packages/*"],
+  "version": "independent"
+}
