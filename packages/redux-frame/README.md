@@ -1,2 +1,2 @@
 # redux-frame
-[API docs](docs/api)
+[API docs](packages/redux-frame/docs/api)
