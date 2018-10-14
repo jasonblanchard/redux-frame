@@ -19,7 +19,8 @@
     "eslint-plugin-react": "^7.11.1",
     "eslint-plugin-standard": "^4.0.0",
     "jest": "^23.6.0",
-    "lerna": "^3.4.3"
+    "lerna": "^3.4.3",
+    "redux": "^4.0.1"
   },
   "scripts": {
     "build:all": "lerna run build",
