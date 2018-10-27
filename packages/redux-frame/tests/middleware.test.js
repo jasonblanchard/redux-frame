@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
 import { frame } from '../src';
-
+import { mergeWithCoeffects } from '../src/utils';
 import middleware from '../src/middleware';
 
 describe('middleware function', () => {
-  it('works with defaults', () => {
+  it('with defaults', () => {
     const mockStore = {
       dispatch: () => {},
       getState: () => ({ counter: 1 }),
@@ -26,7 +26,7 @@ describe('middleware function', () => {
     expect(stack.length > 0).toEqual(true);
   });
 
-  it('works with dispatch', () => {
+  it('with dispatch', () => {
     const dispatch = jest.fn();
 
     const mockStore = {
@@ -46,7 +46,7 @@ describe('middleware function', () => {
     expect(dispatch).toBeCalledWith({ type: 'TEST' });
   });
 
-  it('works with additional coeffect handlers', () => {
+  it('with additional coeffect handlers', () => {
     const mockStore = {
       dispatch: () => {},
       getState: () => ({}),
@@ -66,7 +66,7 @@ describe('middleware function', () => {
     expect(contextMap.coeffects.test).toEqual('tested');
   });
 
-  it('works with additional affect handlers', () => {
+  it('with additional affect handlers', () => {
     const dispatch = () => {};
     const mockStore = {
       dispatch,
@@ -90,6 +90,29 @@ describe('middleware function', () => {
     expect(Object.keys(args[0])).toEqual([ 'coeffects', 'effects', 'queue', 'stack', 'config' ]);
     expect(args[1]).toEqual({ arg1: 'arg1', arg2: 'arg2' });
     expect(args[2]).toEqual(dispatch);
+  });
+
+  it('with simple interceptor', () => {
+    const mockStore = {
+      dispatch: () => {},
+      getState: () => ({}),
+    };
+    const mockNext = () => {};
+    const config = {
+      interceptors: {
+        test: {
+          id: 'test',
+          before: context => mergeWithCoeffects(context, { test: 'tested' }),
+        },
+      },
+    };
+    const action = {
+      type: frame('TEST'),
+      interceptors: ['test'],
+    };
+
+    const contextMap = middleware(config)(mockStore)(mockNext)(action);
+    expect(contextMap.coeffects.test).toEqual('tested');
   });
 
   describe('debug', () => {
