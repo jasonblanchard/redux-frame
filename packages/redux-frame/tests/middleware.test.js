@@ -86,10 +86,6 @@ describe('middleware function', () => {
 
     middleware(config)(mockStore)(mockNext)(action);
     expect(testFn).toBeCalled();
-    const args = testFn.mock.calls[0];
-    expect(Object.keys(args[0])).toEqual([ 'coeffects', 'effects', 'queue', 'stack', 'config' ]);
-    expect(args[1]).toEqual({ arg1: 'arg1', arg2: 'arg2' });
-    expect(args[2]).toEqual(dispatch);
   });
 
   it('with simple interceptor', () => {

@@ -92,6 +92,7 @@ const reduxFrame = (options = {}) => store => next => action => {
   const { interceptors: queuedInterceptors = [] } = action;
   const { effectHandlers = {}, coeffectHandlers = {}, interceptors = {}, onAllActions = [] } = options;
 
+  // TODO: Export constants for built-in effect/coeffectHandlers
   const config = {
     effectHandlers: {
       ...effectHandlers,

@@ -3,6 +3,8 @@ import immutableObjectPath from 'object-path-immutable';
 
 import { mergeWithCoeffects, mergeWithEffects } from './utils';
 
+// TODO: Export constants for each
+
 export function effect({ effectId, args }) {
   return {
     name: 'effect',
@@ -17,6 +19,7 @@ export function doEffects({ dispatch }) {
       const { effectHandlers } = context.config;
       Object.keys(context.effects).forEach(effectId => {
         if (effectHandlers[effectId]) effectHandlers[effectId](context, context.effects[effectId], dispatch);
+        // TODO: Warn?
       });
     },
   };
