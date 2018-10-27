@@ -249,7 +249,7 @@ it('enqueue adds interceptors to queue', () => {
 });
 
 describe('integration with Redux', () => {
-  it.only('creates the right context map with all defaults', () => {
+  it('creates the right context map with all defaults', () => {
     function reducer(state = { tested: false }, action) {
       switch (action.type) {
       case 'TEST':
