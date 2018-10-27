@@ -82,6 +82,14 @@ function resolveInterceptor(config, payload) {
   return config.interceptors[payload];
 }
 
+/**
+ * Redux middlware that invokes the interceptor chain when the action.type is preffixed by FRAME_PREFIX. Add this to Redux with `applyMiddleware()`
+ * @param {Object} options - key/value pairs of effectIds and effect handler functions.
+ * @param {Object} options.effectHandlers - key/value pairs of effectIds and effect handler functions.
+ * @param {Object} options.coeffectHandlers - key/value pairs of coeffectIds and coeffect handler functions.
+ * @param {Object} options.interceptors - key/value pairs of interceptorIds and interceptors. Interceptors may be interceptor objects (with an `id` and a `before` OR `after` function) or functions that return interceptor objects (i.e. interceptor factories). Interceptor factories should be added to the interceptor chain as an array where element 0 is the interceptorId and element 1 are args for the interceptor factory.
+ * @param {Object} options.globalInterceptors - Array of interceptors. These will run AFTER the built-in interceptors and BEFORE action.interceptors.
+*/
 const reduxFrame = (options = {}) => store => next => action => {
   if (!isFrame(action.type)) return next(action);
   // Immediately send this wrapped action along through Redux. Mostly used for debugging
