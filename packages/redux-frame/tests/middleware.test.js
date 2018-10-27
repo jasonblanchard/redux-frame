@@ -4,6 +4,21 @@ import { mergeWithCoeffects } from '../src/utils';
 import middleware from '../src/middleware';
 
 describe('middleware function', () => {
+  it('passes through the action if the type is not framed', () => {
+    const mockStore = {
+      dispatch: () => {},
+      getState: () => ({}),
+    };
+    const mockNext = jest.fn();
+    const action = {
+      type: 'TEST',
+    };
+
+    middleware()(mockStore)(mockNext)(action);
+
+    expect(mockNext).toBeCalledWith({ type: 'TEST' });
+  });
+
   it('with defaults', () => {
     const mockStore = {
       dispatch: () => {},
@@ -64,6 +79,27 @@ describe('middleware function', () => {
 
     const contextMap = middleware(config)(mockStore)(mockNext)(action);
     expect(contextMap.coeffects.test).toEqual('tested');
+  });
+
+  it('does not fail if called with coeffect without a handler', () => {
+    const mockStore = {
+      dispatch: () => {},
+      getState: () => ({}),
+    };
+    const mockNext = () => {};
+    const action = {
+      type: frame('TEST'),
+      interceptors: [['injectCoeffects', { coeffectId: 'test' }]],
+    };
+
+    const contextMap = middleware()(mockStore)(mockNext)(action);
+
+    const { coeffects } = contextMap;
+    expect(coeffects).toEqual({
+      state: {},
+      action: { type: 'TEST' },
+      test: null,
+    });
   });
 
   it('with additional affect handlers', () => {

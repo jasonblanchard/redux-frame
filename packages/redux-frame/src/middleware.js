@@ -30,24 +30,22 @@ function handleInjectedCoeffect(context, coeffectHandlers = {}) {
   const { pendingCoeffectHandler = {} } = coeffects;
   const { coeffectId, args } = pendingCoeffectHandler;
 
-  if (coeffectId) {
-    // TODO: Handle async coeffectHandlers
-    const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context, args) : null;
+  if (!coeffectId) return context;
 
-    let updatedCoeffects = { ...coeffects, ...{ [coeffectId]: result } };
-    updatedCoeffects = removeKey('pendingCoeffectHandler', updatedCoeffects);
+  // TODO: Handle async coeffectHandlers
+  const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context, args) : null;
 
-    const updatedContext = {
-      ...context,
-      ...{
-        coeffects: updatedCoeffects,
-      },
-    };
+  let updatedCoeffects = { ...coeffects, ...{ [coeffectId]: result } };
+  updatedCoeffects = removeKey('pendingCoeffectHandler', updatedCoeffects);
 
-    return updatedContext;
-  }
+  const updatedContext = {
+    ...context,
+    ...{
+      coeffects: updatedCoeffects,
+    },
+  };
 
-  return context;
+  return updatedContext;
 }
 
 // Putting context as last argument so we can partially apply the first two args with `bind`. Thanks, Javascript.
