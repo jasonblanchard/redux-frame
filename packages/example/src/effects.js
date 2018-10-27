@@ -1,5 +1,6 @@
 export default {
-  syncToLocalStorage: (coeffects, args) => {
+  syncToLocalStorage: (context, args) => {
+    const { coeffects } = context;
     const { state, action } = coeffects;
     const { key } = args;
     const data = JSON.stringify([action.thing, ...state.stuff]);

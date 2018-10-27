@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import './App.css';
 
-import { frame, effect, interceptors as reduxFrameInterceptors } from 'redux-frame';
+import { frame } from 'redux-frame';
 
 class App extends Component {
   static propTypes = {
     onSubmit: PropTypes.func,
     onClickClear: PropTypes.func,
-    stuff: PropTypes.object,
+    stuff: PropTypes.array,
   }
 
   state = {
@@ -58,12 +58,20 @@ function mapDispatchToProps(dispatch) {
   return {
     onClickClear: () => dispatch({
       type: frame('CLEAR_STUFF'),
-      interceptors: [reduxFrameInterceptors.debug, effect('clearLocalStorage'), reduxFrameInterceptors.dispatch],
+      interceptors: [
+        ['effect', { effectId: 'debug' }],
+        ['effect', { effectId: 'clearLocalStorage' }],
+        ['effect', { effectId: 'dispatch' }],
+      ],
     }),
     onSubmit: thing => dispatch({
       type: frame('ADD_STUFF'),
       thing,
-      interceptors: [reduxFrameInterceptors.debug, effect('syncToLocalStorage', { key: 'stuff' }), reduxFrameInterceptors.dispatch],
+      interceptors: [
+        ['effect', { effectId: 'debug' }],
+        ['effect', { effectId: 'syncToLocalStorage', args: { key: 'stuff' } }],
+        ['effect', { effectId: 'dispatch' }],
+      ],
     }),
   };
 }
