@@ -1,8 +1,16 @@
-import { enqueue } from './utils';
 import { FRAME_PREFIX } from './constants';
-import { injectCoeffects, doEffects } from './interceptors';
+import { enqueue } from './utils';
+import {
+  doEffects,
+  effect,
+  injectCoeffects,
+  path,
+} from './interceptors';
 
-const removeKey = (key, { [key]: _, ...rest }) => rest; /* eslint-disable-line no-unused-vars */
+function isFrame(type) {
+  const re = new RegExp('^' + FRAME_PREFIX + '/');
+  return re.test(type);
+}
 
 function stripFrame(type) {
   const re = new RegExp('^' + FRAME_PREFIX + '/');
@@ -15,34 +23,29 @@ function normalizeFramedAction(action) {
   return normalizedAction;
 }
 
-function isFrame(type) {
-  const re = new RegExp('^' + FRAME_PREFIX + '/');
-  return re.test(type);
-}
+const removeKey = (key, { [key]: _, ...rest }) => rest; /* eslint-disable-line no-unused-vars */
 
 function handleInjectedCoeffect(context, coeffectHandlers = {}) {
   let { coeffects } = context;
   const { pendingCoeffectHandler = {} } = coeffects;
   const { coeffectId, args } = pendingCoeffectHandler;
 
-  if (coeffectId) {
-    // TODO: Handle async coeffectHandlers
-    const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context.coeffects, args) : null;
+  if (!coeffectId) return context;
 
-    let updatedCoeffects = { ...coeffects, ...{ [coeffectId]: result } };
-    updatedCoeffects = removeKey('pendingCoeffectHandler', updatedCoeffects);
+  // TODO: Handle async coeffectHandlers
+  const result = coeffectHandlers[coeffectId] ? coeffectHandlers[coeffectId](context, args) : null;
 
-    const updatedContext = {
-      ...context,
-      ...{
-        coeffects: updatedCoeffects,
-      },
-    };
+  let updatedCoeffects = { ...coeffects, ...{ [coeffectId]: result } };
+  updatedCoeffects = removeKey('pendingCoeffectHandler', updatedCoeffects);
 
-    return updatedContext;
-  }
+  const updatedContext = {
+    ...context,
+    ...{
+      coeffects: updatedCoeffects,
+    },
+  };
 
-  return context;
+  return updatedContext;
 }
 
 // Putting context as last argument so we can partially apply the first two args with `bind`. Thanks, Javascript.
@@ -74,52 +77,68 @@ function changeDirection(context) {
   return updatedContext;
 }
 
+function resolveInterceptor(config, payload) {
+  if (Array.isArray(payload)) return config.interceptors[payload[0]](payload[1]);
+  return config.interceptors[payload];
+}
+
 /**
  * Redux middlware that invokes the interceptor chain when the action.type is preffixed by FRAME_PREFIX. Add this to Redux with `applyMiddleware()`
  * @param {Object} options - key/value pairs of effectIds and effect handler functions.
  * @param {Object} options.effectHandlers - key/value pairs of effectIds and effect handler functions.
  * @param {Object} options.coeffectHandlers - key/value pairs of coeffectIds and coeffect handler functions.
+ * @param {Object} options.interceptors - key/value pairs of interceptorIds and interceptors. Interceptors may be interceptor objects (with an `id` and a `before` OR `after` function) or functions that return interceptor objects (i.e. interceptor factories). Interceptor factories should be added to the interceptor chain as an array where element 0 is the interceptorId and element 1 are args for the interceptor factory.
  * @param {Object} options.globalInterceptors - Array of interceptors. These will run AFTER the built-in interceptors and BEFORE action.interceptors.
 */
-const reFrame = (options = {}) => store => next => action => {
-  if (isFrame(action.type)) {
-    // Immediately send this wrapped action along through Redux. Mostly used for debugging
-    next(action);
-
-    const { interceptors = [] } = action;
-    const { effectHandlers = {}, coeffectHandlers = {}, globalInterceptors = [] } = options;
-
-    const config = {
-      effectHandlers: {
-        ...effectHandlers,
-        dispatch: (coeffects, args, dispatch) => dispatch(coeffects.action),
-        debug: (coeffects, context) => console.log(action.type, context), /* eslint-disable-line no-console */
-      },
-      coeffectHandlers: {
-        ...coeffectHandlers,
-        state: () => store.getState(),
-        action: () => normalizeFramedAction(action),
-      },
-      globalInterceptors,
-    };
-
-    // Initialize context. This gets threaded through all interceptors.
-    const context = {
-      coeffects: {},
-      effects: {},
-      queue: [doEffects(store.dispatch), injectCoeffects('state'), injectCoeffects('action'), ...globalInterceptors, ...interceptors],
-      stack: [],
-      config,
-    };
-
-    return [
-      invokeInterceptors.bind(null, 'before'),
-      changeDirection,
-      invokeInterceptors.bind(null, 'after'),
-    ].reduce((context, fn) => fn(context), context);
-  }
-
+const reduxFrame = (options = {}) => store => next => action => {
+  if (!isFrame(action.type)) return next(action);
+  // Immediately send this wrapped action along through Redux. Mostly used for debugging
   next(action);
+
+  const { interceptors: queuedInterceptors = [] } = action;
+  const { effectHandlers = {}, coeffectHandlers = {}, interceptors = {}, onAllActions = [] } = options;
+
+  // TODO: Export constants for built-in effect/coeffectHandlers
+  const config = {
+    effectHandlers: {
+      ...effectHandlers,
+      debug: (context) => console.log(action.type, context), /* eslint-disable-line no-console */
+      dispatch: (context, args, dispatch) => dispatch(context.coeffects.action),
+    },
+    coeffectHandlers: {
+      ...coeffectHandlers,
+      action: () => normalizeFramedAction(action),
+      state: () => store.getState(),
+    },
+    interceptors: {
+      ...interceptors,
+      doEffects,
+      effect,
+      injectCoeffects,
+      path,
+    },
+    onAllActions,
+  };
+
+  const defaultInterceptors = [
+    ['doEffects', { dispatch: store.dispatch }],
+    ['injectCoeffects', { coeffectId: 'state' }],
+    ['injectCoeffects', { coeffectId: 'action' }],
+  ];
+
+  const context = {
+    coeffects: {},
+    effects: {},
+    queue: [...defaultInterceptors, ...onAllActions, ...queuedInterceptors].map(interceptorPayload => resolveInterceptor(config, interceptorPayload)),
+    stack: [],
+    config,
+  };
+
+  return [
+    invokeInterceptors.bind(null, 'before'),
+    changeDirection,
+    invokeInterceptors.bind(null, 'after'),
+  ].reduce((context, fn) => fn(context), context);
 };
 
-export default reFrame;
+export default reduxFrame;

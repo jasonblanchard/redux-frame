@@ -18,8 +18,8 @@ redux-frame is pretty much a Javascript port of dominos 1 through 3 that fits in
 
 Redux-frame works pretty similarly and so, having thoroughly enjoyed those docs above, you almost already know how this library works. There are a few differences:
 
-1. You don't "register" effect and coeffect handlers throughout the code. Instead, you pass them in at store creation time. The purpose for this is to avoid having state hang out in module scope which I always find a little unsettling. Redux gives us a natural place to inject these dependencies when you pass the middleware in to `createStore()`.
-1. You also don't need to register event handlers at all. In re-frame, this is where you build up your interceptor chain. In redux-frame, interceptors are listed directly in the action payload. The reason for this is [react-redux](https://github.com/reduxjs/react-redux) already provides a level of indirection between actions and view code by way of the `connect()` higher-order component and your `mapDispatchToProps()` function. If your action payloads start to get complex (they will - by design, a lot of orchestration gets delegated to these objects) and you want to make them more re-usable, feel free to use action creator functions.
+1. Registering effects and coeffects happen at Redux `createStore()` time. This avoids putting anything in global module scope.
+1. You don't need to register event handlers at all. In re-frame, this is where you build up your interceptor chain. In redux-frame, interceptors are listed directly in the action payload as data. The reason for this is [react-redux](https://github.com/reduxjs/react-redux) already provides a level of indirection between actions and view code by way of the `connect()` higher-order component and your `mapDispatchToProps()` function. If your action payloads start to get complex (they will - by design, a lot of orchestration gets delegated to these objects) and you want to make them more re-usable, feel free to use action creator functions.
 1. There are no interceptors that deal with the `db` value. Instead, redux-frame can forward actions through the rest of the Redux middleware stack to your reducer function(s) which can handle state transitions just like you're used to with pure Redux. In other words, the `db` value is what you get from `store.getState()`. You are free to choose your event schema (imperative "DO_X" event types or declarative "X_HAPPENED" event types) and your reducer composition structure (`reduceReducers` or `combineReducers`). Both are outside the scope of this library.
 
 ## Quick start
@@ -40,13 +40,15 @@ import reducer from './reducer'; // You'll create this like any other reducer.
 // You'll create these, too, following the docs below:
 import effectHandlers from './effects';
 import coeffectHandlers from './coeffects';
+import interceptors from './interceptors';
 
 export default createStore(
   reducer,
   applyMiddleware(
     reduxFrame({
       effectHandlers,
-      coeffectHandlers
+      coeffectHandlers,
+      interceptors
     })
   )
 )
@@ -57,19 +59,17 @@ Configure your application with this `store` just like any other Redux sture.
 Later, in your application, dispatch an action with an interceptor chain:
 
 ```js
-import { frame, effect, injectCoeffect, interceptors: as reduxFrameInterceptors } from 'redux-frame';
-import interceptors from './interceptors';
-
 function mapDispatchToProps(dispatch) {
   return {
     handleSomething: dispatch({
       type: frame('SOME_ACTION'),
       interceptors: [
-        reduxFrameInterceptors.debug, // Built-in interceptor to log out the context map
-        reduxFrameInterceptors.dispatch, // Build-in effect handler for dispatching the action in coeffects.action
-        effect('someCustomEffect', { someArgKey: 'someArgValue' }), // Adds `someCustomEffect` to the effect map which later invokes the someCustomEffect effect handler.
-        injectCoeffect('someCustomCoeffect', { someArgKey: 'someArgValue' }), // Replaces the `someCustomCoeffect` key in coeffects with the return value of the someCustomCoeffect coeffect handler.
-        interceptors.someCustomInterceptor // Invokes the someCustomInterceptor.before function in the first pass through the interceptor chain and the someCustomInterceptor.after function in the second pass. In this position, its `before` function will be the last to get invoked and its `after` function will be the first to be invoked.
+        ['effect', { effectId: 'debug' }], // Built-in interceptor to log out the context map
+        ['effect', { effectId: 'dispatch' }], // Build-in effect handler for dispatching the action in coeffects.action
+        ['effect', { effectId: 'someCustomEffect' }, args: { someArgKey: 'someArgValue' } }], // Adds `someCustomEffect` to the effect map which later invokes the someCustomEffect effect handler.
+        ['injectCoeffect', { coeffectId: 'someCustomCoeffect', args: { someArgKey: 'someArgValue' } }], // Replaces the `someCustomCoeffect` key in coeffects with the return value of the someCustomCoeffect coeffect handler.
+        'customInterceptor', // Invokes the someCustomInterceptor.before function in the first pass through the interceptor chain and the someCustomInterceptor.after function in the second pass. In this position, its `before` function will be the last to get invoked and its `after` function will be the first to be invoked.
+        ['anotherCustomInterceptor', { arg1: 'arg1' }] // Invokes interceptor factory with arg object. This factory function must return an interceptor object with an `id`, and `before` OR `after` function.
       ]
     })
   }
@@ -83,34 +83,36 @@ Right [over here](packages/redux-frame/docs/api.md).
 ### Interceptors
 The interceptor chain is kind of like middleware functions that you see in [Redux](https://redux.js.org/advanced/middleware) and [Express](https://expressjs.com/en/guide/using-middleware.html) - you inject behavior with middleware functions that can do special stuff and then invoke some kind of `next()` function that represents the next link in the chain.
 
-The interceptor chain is _kind of_ like a middleware chain except instead of using the functions and the call stack to process everything, the interceptor chain creates a "virtual" stack using data that can be walked in two directions and modified at runtime (whoa)!
+The interceptor chain is _kind of_ like a middleware chain except instead of using the functions and the call stack to process everything, the interceptor chain creates a "virtual" stack using data that can be walked in two directions and modified at runtime.
 
 Interceptors are objects that look like this:
 
 ```js
 const myInterceptor: {
-  id: 'myInterceptor', // Mostly used for debugging
+  id: 'myInterceptor', // Used only for debugging.
   before: context => { /* do something with context, return a new context */ }, // We'll get to this `context` thing later.
   after: context => { /* do something with context, return a new context */ } // You don't need both a `before` and `after` key, but you will need one of them for your interceptor to do anything.
 }
 ```
 
-Interceptors are invoked in the redux-frame middleware by adding them to the action payload at dispatch time:
+Once they are registered at store creation time, interceptors are invoked in the redux-frame middleware by adding their names to the action payload at dispatch time:
 
 ```js
 dispatch({
   type: frame('SOME_ACTION'), // `frame()` is provided by redux-frame. It just adds a special prefix to the action type so the middleware knows to deal with it.
-  interceptors: [myInterceptor, anotherInterceptor, yetAnotherInterceptor]
+  interceptors: ['myInterceptor', 'anotherInterceptor', 'yetAnotherInterceptor']
 });
 ```
 
 Because this action type is `frame`'d, the redux-frame middleware will catch the action and, instead of sending it through the rest of the Redux middleware to your reducers, it'll start processing the interceptor chain.
 
-"Processing" the interceptor chain means two things:
-1. Running through all the `before()` functions as a queue (with the head of the queue being the right-most interceptor function)
-2. Running through all the `after()` functions as a stack (with the head of the stack being the last interceptor run in the queue).
+"Processing" the interceptor chain goes like this:
+1. Build up a queue of functions by looking them up by name.
+1. Run through all the `before()` functions in the queue (with the head of the queue being the right-most interceptor function).
+1. Build up a stack of interceptor functions already run in the queue.
+1. Run through all the `after()` functions in the stack (with the head of the stack being the last interceptor run in the queue).
 
-In other words, your interceptor list is processed once from right to left calling each `before()` function, usually building up the `coeffects` object described below, and then once from left to right calling each `after()` function, usually building up the `effects` object also described below..
+In other words, your interceptor list is processed once from right to left calling each `before()` function (usually building up the `coeffects` object described below) and then once from left to right calling each `after()` function (usually building up the `effects` object also described below).
 
 As it does this, it threads a `context` map through each `before()` and `after()` function. These functions can return a new `context` map with more stuff in it. The context map has a few important keys in it:
 
@@ -120,21 +122,21 @@ As it does this, it threads a `context` map through each `before()` and `after()
 - `stack` - list of interceptors already walked whose `after` functions may need to be run.
 - `config` - Options object that was passed to `reduxFrame` middleware.
 
-Interceptor functions should _always_ return a new context map and should _always_ be pure functions.
+> NOTE: Interceptor functions should _always_ return a new context map and should _always_ be pure functions.
 
 ### Effects
 Inevitably, your dispatched actions will eventually need to kick off side effects - http requests, dispatching other actions, etc. The way this is handled in redux-frame is to configure `eventHandler`s that are passed at store creation time. These are functions that look like this:
 
 ```js
 const effectHandlers = {
-  myEffectHandler = (coeffects, args, dispatch) => {
+  myEffectHandler = (context, args, dispatch) => {
     /* do some gnarly code that interacts with the outside world, yuck! */
     return; // Whatever you return from these functions is ignored and lost forever, so don't bother trying.
   }
 };
 ```
 
-In your effect handler, you have access to all the coeffects built up by previous interceptors. You also have access to an `args` object and redux's `dispatch` function.
+In your effect handler, you have access to the context map built up by previous interceptors. You also have access to an `args` object and redux's `dispatch` function.
 
 This effect handler gets invoked by the redux-frame middleware by you adding a key with the same name as the handler in the `effects` key of the `context` map. So in this case, you'd build up your `context` object to look like this:
 
@@ -147,9 +149,18 @@ This effect handler gets invoked by the redux-frame middleware by you adding a k
 }
 ```
 
-> NOTE: There's a utility that'll merge this into the `effects` object this for you. Use it like this: `effect('myEffectHandler', { someArgKey: 'someArgValue' });`
+You can create this context map shape by dispatching an action with the `effect` interceptor key, effectId and args:
 
-The value of this key is passed as the `args` in your coeffect handler. The return value of coeffect handlers is ignored - they _just_ do side-effects. This is kicked off by a special effect handler at the very end of your interceptor chain that invokes all the effect handlers listed in `context.effects`. There is no guarantee of order in which these are executed.
+```js
+dispatch({
+  type: frame('SOME_ACTION'),
+  interceptors: [
+    ['effect', { effectId: 'myEffectHandler', args: { someArgKey: 'someArgValue' } }]
+  ]
+})
+```
+
+The return value of coeffect handlers is ignored - they _just_ do side-effects. This is kicked off by a special effect handler at the very end of your interceptor chain that invokes all the effect handlers listed in `context.effects`. There is no guarantee of order in which these are executed.
 
 And just like that, you can move side-effects to `effectHandlers` where they can be tested in isolation and then orchestrate them with data at action dispatch time.
 
@@ -158,25 +169,27 @@ There are a few built-in effect handlers that you can use:
 - `debug` - this calls `console.log` with the `action.type` and entire `context` map. This is useful for... well, debugging.
 
 ### Coeffects
-Sometimes, your actions need access to the outside world. For example, your state transformation may be a function of some data stored in localStorage or a cookie. However, doing this in an interceptor would make it impure!
+Sometimes, your actions need access to the outside world. For example, your state transformation may be a function of some data stored in localStorage or a cookie. However, doing this in an interceptor would make it impure :(
 
 You can facilitate this by configuring your middleware with `coeffectHandlers`. These are functions that look like this:
 
 ```js
 const coeffectHandlers = {
-  myCoeffectHandler: (coeffects, args) => {
+  myCoeffectHandler: (context, args) => {
     /* do some gnarly code that interacts with the outside world, yuck! */
     return { some: 'thing' }; // Whatever you return here is added as the value of the `myCoeffectHandler` key in the coeffects map.
   }
 }
 ```
 
-This function gets invoked by the redux-frame middleware by calling the `injectCoeffect()` function in your interceptor chain where the first argument is the same name as the handler and the second argument is an `args` object:
+This function gets invoked by the redux-frame middleware by dispatching an action with the `injectCoeffect` interceptor key, effectId and args:
 
 ```js
 dispatch({
   type: frame('SOME_ACTION'),
-  interceptors: [injectCoeffect('myCoeffectHandler', { someArgKey: 'someArgValue' })]
+  interceptors: [
+    ['injectCoeffect', { coeffectId: 'myCoeffectHandler', args: { someArgKey: 'someArgValue'}}]
+  ]
 })
 ```
 
@@ -197,9 +210,9 @@ Ultimately, though, this is a pretty advanced feature that should be used judici
 
 ## FAQ
 ### Why not some other Redux side-effect library like redux-thunk, redux-saga, redux-observable?
-All these libraries have different approaches to dealing with time and sequencing. This library ____ has a really good write-up on the challenges inherent in dealing with time. Its the stance of this library that time and sequences are best expressed with data and that we can leverage data to push effect-ful code to the boundaries of the application.
+All these libraries have different approaches to dealing with time and sequencing. [This library](https://github.com/Day8/re-frame-async-flow-fx#time) has a really good write-up on the challenges inherent in dealing with time. Its the stance of this library that time and sequences are best expressed with data and that we can leverage data to push effect-ful code to the boundaries of the application.
 ### How do I test it?
-That's actually one of the motivators for porting re-frame to the Redux ecosystem. Testing each part of your redux-frame stack in isolation should be super duper easy:
+That's actually one of the motivators for porting re-frame to the Redux ecosystem. Testing each part of your redux-frame stack in isolation should be pretty easy:
 
 - actions are just object literals. Test them if you want, it should be pretty straightforward.
 - interceptor `before()` and `after()` should be pure functions, so testing them should also be simply.

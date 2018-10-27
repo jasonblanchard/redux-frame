@@ -4,28 +4,22 @@
 <dt><a href="#FRAME_PREFIX">FRAME_PREFIX</a></dt>
 <dd><p>Prefix that is tacked on to action type when using <code>frame()</code></p>
 </dd>
-<dt><a href="#dispatch">dispatch</a></dt>
-<dd><p>Interceptor that dispatches the action stored in context.coeffects.action.</p>
-</dd>
-<dt><a href="#debug">debug</a></dt>
-<dd><p>Interceptor that logs the context with console.log().</p>
-</dd>
 </dl>
 
 ## Functions
 
 <dl>
-<dt><a href="#effect">effect(effectId, args)</a></dt>
+<dt><a href="#effect">effect()</a></dt>
 <dd><p>Interceptor factory that creates an interceptor that merges the effectId and args into context.effects.</p>
 </dd>
-<dt><a href="#injectCoeffects">injectCoeffects(coeffectId, args)</a></dt>
+<dt><a href="#injectCoeffects">injectCoeffects()</a></dt>
 <dd><p>Interceptor factory that creates an interceptor that merges the result of the coeffect handler named coeffectId into context.coeffects under the coeffectId key.</p>
 </dd>
 <dt><a href="#path">path(args)</a></dt>
 <dd><p>Interceptor factory that creates an interceptor that merges the value at coeffects[from] into coeffects[to].
 Useful if you want to tack on the result from a previous coeffect handler on to the action before dispatching it so that you can access that data in your reducers.</p>
 </dd>
-<dt><a href="#reFrame">reFrame(options)</a></dt>
+<dt><a href="#reduxFrame">reduxFrame(options)</a></dt>
 <dd><p>Redux middlware that invokes the interceptor chain when the action.type is preffixed by FRAME_PREFIX. Add this to Redux with <code>applyMiddleware()</code></p>
 </dd>
 <dt><a href="#mergeWithEffects">mergeWithEffects(context, effect)</a></dt>
@@ -47,42 +41,44 @@ Actions that don&#39;t have this prefix are passed through the rest of the confi
 Prefix that is tacked on to action type when using `frame()`
 
 **Kind**: global constant  
-<a name="dispatch"></a>
-
-## dispatch
-Interceptor that dispatches the action stored in context.coeffects.action.
-
-**Kind**: global constant  
-<a name="debug"></a>
-
-## debug
-Interceptor that logs the context with console.log().
-
-**Kind**: global constant  
 <a name="effect"></a>
 
-## effect(effectId, args)
+## effect()
 Interceptor factory that creates an interceptor that merges the effectId and args into context.effects.
 
 **Kind**: global function  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| effectId | <code>string</code> | effectId |
-| args | <code>object</code> | key value pair arguments |
+|  | <code>string</code> | effectId |
+|  | <code>object</code> | key value pair arguments |
 
+**Example**  
+```js
+// In your interceptor chain:
+['effect', { effectId: 'someEffectHandler' args: { arg1: 'arg1' } }]
+// When the interceptors are run, this will invoke your effect handler:
+someEffectHandler(context, { arg1: 'arg1' }, dispatch)
+```
 <a name="injectCoeffects"></a>
 
-## injectCoeffects(coeffectId, args)
+## injectCoeffects()
 Interceptor factory that creates an interceptor that merges the result of the coeffect handler named coeffectId into context.coeffects under the coeffectId key.
 
 **Kind**: global function  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| coeffectId | <code>string</code> | coeffectId |
-| args | <code>object</code> | key value pair arguments |
+|  | <code>string</code> | coeffectId |
+|  | <code>object</code> | key value pair arguments |
 
+**Example**  
+```js
+// In your interceptor chain:
+['injectCoeffects', { coeffectId: 'someCoeffectHandler' args: { arg1: 'arg1' } }]
+// When the interceptors are run, this will invoke your effect handler:
+someCoeffectHandler(context, { arg1: 'arg1' })
+```
 <a name="path"></a>
 
 ## path(args)
@@ -99,9 +95,14 @@ Useful if you want to tack on the result from a previous coeffect handler on to 
 | args.to | <code>string</code> | destination path. Can express a deep path with dot-separated path string. |
 | args.to | <code>Array.&lt;string&gt;</code> | destination path.Can express a deep path with array of keys. |
 
-<a name="reFrame"></a>
+**Example**  
+```js
+// In your interceptor chain:
+['path', { from: 'some.from.path', to: 'some.to.path' }]
+```
+<a name="reduxFrame"></a>
 
-## reFrame(options)
+## reduxFrame(options)
 Redux middlware that invokes the interceptor chain when the action.type is preffixed by FRAME_PREFIX. Add this to Redux with `applyMiddleware()`
 
 **Kind**: global function  
@@ -111,6 +112,7 @@ Redux middlware that invokes the interceptor chain when the action.type is preff
 | options | <code>Object</code> | key/value pairs of effectIds and effect handler functions. |
 | options.effectHandlers | <code>Object</code> | key/value pairs of effectIds and effect handler functions. |
 | options.coeffectHandlers | <code>Object</code> | key/value pairs of coeffectIds and coeffect handler functions. |
+| options.interceptors | <code>Object</code> | key/value pairs of interceptorIds and interceptors. Interceptors may be interceptor objects (with an `id` and a `before` OR `after` function) or functions that return interceptor objects (i.e. interceptor factories). Interceptor factories should be added to the interceptor chain as an array where element 0 is the interceptorId and element 1 are args for the interceptor factory. |
 | options.globalInterceptors | <code>Object</code> | Array of interceptors. These will run AFTER the built-in interceptors and BEFORE action.interceptors. |
 
 <a name="mergeWithEffects"></a>
