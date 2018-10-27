@@ -1,11 +1,4 @@
 export {
-  default as interceptors,
-  effect,
-  injectCoeffects,
-  path,
-} from './interceptors';
-
-export {
   default as reduxFrame,
 } from './middleware';
 
