@@ -249,7 +249,7 @@ it('enqueue adds interceptors to queue', () => {
 });
 
 describe('integration with Redux', () => {
-  it('creates the right context map with all defaults', () => {
+  it.only('creates the right context map with all defaults', () => {
     function reducer(state = { tested: false }, action) {
       switch (action.type) {
       case 'TEST':
@@ -261,22 +261,34 @@ describe('integration with Redux', () => {
 
     const store = createStore(
       reducer,
-      applyMiddleware(reduxFrame())
+      applyMiddleware(reduxFrame({
+        interceptors: {
+          noArgs: {
+            before: context => mergeWithCoeffects(context, { noArgs: 'noArgs' }),
+          },
+          withArgs: args => ({
+            before: context => mergeWithCoeffects(context, { withArgs: args.firstArg }),
+          }),
+        },
+      }))
     );
 
     const contextMap = store.dispatch({
       type: frame('TEST'),
       someKey: 'tested',
+      interceptors: ['noArgs', ['withArgs', { firstArg: 'arg' }]],
     });
 
     expect(contextMap.coeffects).toEqual({
-      action: {
-        type: 'TEST',
-        someKey: 'tested',
-      },
-      state: {
-        tested: false,
-      },
+      // action: {
+      //   type: 'TEST',
+      //   someKey: 'tested',
+      // },
+      noArgs: 'noArgs',
+      withArgs: 'arg',
+      // state: {
+      //   tested: false,
+      // },
     });
 
     expect(contextMap.effects).toEqual({});

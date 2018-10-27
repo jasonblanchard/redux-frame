@@ -87,7 +87,7 @@ const reFrame = (options = {}) => store => next => action => {
     next(action);
 
     const { interceptors = [] } = action;
-    const { effectHandlers = {}, coeffectHandlers = {}, globalInterceptors = [] } = options;
+    const { effectHandlers = {}, coeffectHandlers = {}, globalInterceptors = [], interceptors: registeredInterceptors } = options;
 
     const config = {
       effectHandlers: {
@@ -100,6 +100,7 @@ const reFrame = (options = {}) => store => next => action => {
         state: () => store.getState(),
         action: () => normalizeFramedAction(action),
       },
+      registeredInterceptors,
       globalInterceptors,
     };
 
@@ -107,7 +108,8 @@ const reFrame = (options = {}) => store => next => action => {
     const context = {
       coeffects: {},
       effects: {},
-      queue: [doEffects(store.dispatch), injectCoeffects('state'), injectCoeffects('action'), ...globalInterceptors, ...interceptors],
+      // queue: [doEffects(store.dispatch), injectCoeffects('state'), injectCoeffects('action'), ...globalInterceptors, ...interceptors],
+      queue: interceptors.map(interceptorPayload => Array.isArray(interceptorPayload) ? config.registeredInterceptors[interceptorPayload[0]](interceptorPayload[1]) : config.registeredInterceptors[interceptorPayload]),
       stack: [],
       config,
     };
